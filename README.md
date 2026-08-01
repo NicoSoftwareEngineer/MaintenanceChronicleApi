@@ -128,3 +128,5 @@ Configure the `SmtpOptions` and `EnvironmentOptions` in `appsettings.json` to ma
 
 Authentication is handled via **JWT (JSON Web Tokens)**. Ensure the `JwtOptions.SecretKey` is secure and sufficiently long.
 
+#### I am retaking a course and I have work in a different repository --- what should I do?
+If you did pass the requirements for the final project in a previous year, you don't need to repeat that part of the course again. If you didn't pass this requirement, you are, in principle, starting with no progress on the final project. Therefore, follow the current year's deadlines, the current year's *relevant teacher*, and manually transfer your work (specification, implementation) from the other repository to this one (including merge requests).
