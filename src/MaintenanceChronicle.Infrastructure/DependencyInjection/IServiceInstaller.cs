@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace MaintenanceChronicle.Infrastructure;
+namespace MaintenanceChronicle.Infrastructure.DependencyInjection;
 
 public interface IServiceInstaller
 {

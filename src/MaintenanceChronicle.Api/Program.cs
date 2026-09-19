@@ -12,13 +12,13 @@ using MaintenanceChronicle.Application.Validators;
 using MaintenanceChronicle.BackgroundServices.BackgroundWorkers;
 using MaintenanceChronicle.Data.Entities.Account;
 using MaintenanceChronicle.Data.Entities.Business;
-using MaintenanceChronicle.Infrastructure;
 using MaintenanceChronicle.Utilities.Error;
 using MaintenanceChronicle.Utilities.Helpers;
 using Microsoft.OpenApi.Models;
 using MaintenanceChronicle.Utilities.Options;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
+using MaintenanceChronicle.Infrastructure.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 

@@ -1,5 +1,5 @@
 ﻿using MaintenanceChronicle.Api.Utils;
-using MaintenanceChronicle.Infrastructure;
+using MaintenanceChronicle.Infrastructure.DependencyInjection;
 using MaintenanceChronicle.Utilities.Helpers;
 using NodaTime;
 

@@ -2,7 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
-namespace MaintenanceChronicle.Infrastructure;
+namespace MaintenanceChronicle.Infrastructure.DependencyInjection;
 
 public static class ServiceInstallerExtensions
 {

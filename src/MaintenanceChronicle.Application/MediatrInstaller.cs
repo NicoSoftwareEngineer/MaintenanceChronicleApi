@@ -1,4 +1,4 @@
-using MaintenanceChronicle.Infrastructure;
+using MaintenanceChronicle.Infrastructure.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 

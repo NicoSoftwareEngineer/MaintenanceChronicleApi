@@ -1,5 +1,5 @@
 ﻿using System.Reflection;
-using MaintenanceChronicle.Infrastructure;
+using MaintenanceChronicle.Infrastructure.DependencyInjection;
 using Microsoft.OpenApi.Models;
 
 namespace MaintenanceChronicle.Api.Installers;
