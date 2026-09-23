@@ -23,6 +23,6 @@ public class GenericReadOnlyRepository<TEntity>(AppDbContext dbContext) : IReadO
             entities = entities.Include(include);
         }
 
-        return await entities.ToListAsync(cancellationToken);
+        return await entities.AsNoTracking().ToListAsync(cancellationToken);
     }
 }
