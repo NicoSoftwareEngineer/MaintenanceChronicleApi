@@ -2,6 +2,7 @@ using MaintenanceChronicle.Application.Contracts.Utils.Commands;
 using MaintenanceChronicle.Data;
 using MaintenanceChronicle.Data.Entities.Business;
 using MaintenanceChronicle.Data.Interfaces;
+using MaintenanceChronicle.Infrastructure.Persistence;
 using MaintenanceChronicle.Utilities.Error;
 using MediatR;
 using NodaTime;
@@ -10,11 +11,11 @@ namespace MaintenanceChronicle.Application.Customers.Commands;
 /// <summary>
 /// Handler for <see cref="DeleteEntityByIdCommand{Customer}"/>
 /// </summary>
-public class DeleteCustomerCommandHandler(AppDbContext dbContext, IClock clock) : IRequestHandler<DeleteEntityByIdCommand<Customer>>
+public class DeleteCustomerCommandHandler(IReadOnlyRepository<Customer> customersReadOnlyRepository, IUnitOfWork uow, IClock clock) : IRequestHandler<DeleteEntityByIdCommand<Customer>>
 {
     public async Task Handle(DeleteEntityByIdCommand<Customer> request, CancellationToken cancellationToken)
     {
-        var customer = await dbContext.Customers.FindAsync([request.Id], cancellationToken);
+        var customer = await customersReadOnlyRepository.GetByIdAsync(request.Id, cancellationToken);
         if (customer is null)
         {
             throw new BadRequestException(ErrorType.CustomerNotFound);
@@ -22,6 +23,6 @@ public class DeleteCustomerCommandHandler(AppDbContext dbContext, IClock clock) 
 
         customer.SetDeleteBy(request.UserId, clock.GetCurrentInstant());
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await uow.SaveChangesAsync(cancellationToken);
     }
 }
