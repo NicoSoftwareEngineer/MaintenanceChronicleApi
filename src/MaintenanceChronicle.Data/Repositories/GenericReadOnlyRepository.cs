@@ -1,4 +1,5 @@
-﻿using MaintenanceChronicle.Data.Interfaces;
+﻿using System.Linq.Expressions;
+using MaintenanceChronicle.Data.Interfaces;
 using MaintenanceChronicle.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,10 +14,15 @@ public class GenericReadOnlyRepository<TEntity>(AppDbContext dbContext) : IReadO
         return entity;
     }
 
-    public async Task<IReadOnlyList<TEntity>> ListAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<TEntity>> ListAsync(CancellationToken cancellationToken = default, params Expression<Func<TEntity, object>>[] includes)
     {
-        var entity = dbContext.Set<TEntity>().AsQueryable();
+        IQueryable<TEntity> entities = dbContext.Set<TEntity>();
 
-        return await entity.ToListAsync(cancellationToken);
+        foreach (var include in includes)
+        {
+            entities = entities.Include(include);
+        }
+
+        return await entities.ToListAsync(cancellationToken);
     }
 }

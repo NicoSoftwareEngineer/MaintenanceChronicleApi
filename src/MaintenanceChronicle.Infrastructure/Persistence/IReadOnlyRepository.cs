@@ -1,8 +1,10 @@
-﻿namespace MaintenanceChronicle.Infrastructure.Persistence;
+﻿using System.Linq.Expressions;
+
+namespace MaintenanceChronicle.Infrastructure.Persistence;
 
 public interface IReadOnlyRepository<TEntity>
 {
     Task<TEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<TEntity>> ListAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<TEntity>> ListAsync(CancellationToken cancellationToken = default, params Expression<Func<TEntity, object>>[] includes);
 
 }
