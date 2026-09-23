@@ -1,5 +1,7 @@
 ﻿using MaintenanceChronicle.Data.Entities.Business;
+using MaintenanceChronicle.Data.Repositories;
 using MaintenanceChronicle.Infrastructure.DependencyInjection;
+using MaintenanceChronicle.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,5 +22,9 @@ public class DatabaseInstaller : IServiceInstaller
                 optionsBuilder.MapEnum<RecordType>("recordType");
             });
         });
+
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped(typeof(IReadOnlyRepository<>), typeof(GenericReadOnlyRepository<>));
+        services.AddScoped(typeof(IRepository<>), typeof(GenericRepository<>));
     }
 }
