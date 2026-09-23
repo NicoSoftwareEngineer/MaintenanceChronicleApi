@@ -11,11 +11,11 @@ namespace MaintenanceChronicle.Application.Customers.Commands;
 /// <summary>
 /// Handler for <see cref="DeleteEntityByIdCommand{Customer}"/>
 /// </summary>
-public class DeleteCustomerCommandHandler(IReadOnlyRepository<Customer> customersReadOnlyRepository, IUnitOfWork uow, IClock clock) : IRequestHandler<DeleteEntityByIdCommand<Customer>>
+public class DeleteCustomerCommandHandler(IRepository<Customer> customerRepository, IUnitOfWork uow, IClock clock) : IRequestHandler<DeleteEntityByIdCommand<Customer>>
 {
     public async Task Handle(DeleteEntityByIdCommand<Customer> request, CancellationToken cancellationToken)
     {
-        var customer = await customersReadOnlyRepository.GetByIdAsync(request.Id, cancellationToken);
+        var customer = await customerRepository.GetByIdAsync(request.Id, cancellationToken);
         if (customer is null)
         {
             throw new BadRequestException(ErrorType.CustomerNotFound);

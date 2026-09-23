@@ -11,12 +11,12 @@ namespace MaintenanceChronicle.Application.Locations.Commands;
 /// <summary>
 /// Handler for <see cref="UpdateLocationCommand"/>
 /// </summary>
-public class UpdateLocationCommandHandler(IReadOnlyRepository<Location> locationReadOnlyRepository, IUnitOfWork uow, IClock clock) : IRequestHandler<UpdateLocationCommand, ManageLocationDetailDto>
+public class UpdateLocationCommandHandler(IRepository<Location> locationRepository, IUnitOfWork uow, IClock clock) : IRequestHandler<UpdateLocationCommand, ManageLocationDetailDto>
 {
     public async Task<ManageLocationDetailDto> Handle(UpdateLocationCommand request, CancellationToken cancellationToken)
     {
         // Get current location from db
-        var locationEntity = await locationReadOnlyRepository.GetByIdAsync(request.LocationId, cancellationToken);
+        var locationEntity = await locationRepository.GetByIdAsync(request.LocationId, cancellationToken);
         if (locationEntity == null)
         {
             throw new BadRequestException(ErrorType.LocationNotFound);

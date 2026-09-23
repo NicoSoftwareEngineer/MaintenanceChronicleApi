@@ -13,12 +13,12 @@ namespace MaintenanceChronicle.Application.Customers.Commands;
 /// <summary>
 /// Handler for <see cref="UpdateCustomerCommand"/>
 /// </summary>
-public class UpdateCustomerCommandHandler(IReadOnlyRepository<Customer> customerReadOnlyRepository, IUnitOfWork uow, IClock clock) : IRequestHandler<UpdateCustomerCommand, ManageCustomerDetailDto>
+public class UpdateCustomerCommandHandler(IRepository<Customer> customerRepository, IUnitOfWork uow, IClock clock) : IRequestHandler<UpdateCustomerCommand, ManageCustomerDetailDto>
 {
     public async Task<ManageCustomerDetailDto> Handle(UpdateCustomerCommand request, CancellationToken cancellationToken)
     {
         // Get customer entity from database
-        var customerEntity = await customerReadOnlyRepository.GetByIdAsync(request.CustomerId, cancellationToken);
+        var customerEntity = await customerRepository.GetByIdAsync(request.CustomerId, cancellationToken);
         if (customerEntity == null)
         {
             throw new BadRequestException(ErrorType.CustomerNotFound);
