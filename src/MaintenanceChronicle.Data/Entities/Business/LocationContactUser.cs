@@ -7,7 +7,7 @@ using NodaTime;
 
 namespace MaintenanceChronicle.Data.Entities.Business;
 [Table(nameof(LocationContactUser))]
-public class LocationContactUser : ITrackable, ITenant
+public class LocationContactUser : ITrackable, ITenant, IHasId
 {
     public Guid Id { get; set; }
     public Guid UserId { get; set; }

@@ -9,7 +9,7 @@ using NodaTime;
 namespace MaintenanceChronicle.Data.Entities.Business;
 
 [Table(nameof(MaintenanceReminder))]
-public class MaintenanceReminder : ITenant, ITrackable
+public class MaintenanceReminder : ITenant, ITrackable, IHasId
 {
     public Guid Id { get; set; }
     [MaxLength(StringLengthConstants.MaxDescriptionLength)]

@@ -5,11 +5,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MaintenanceChronicle.Data.Repositories;
 
-public class GenericReadOnlyRepository<TEntity>(AppDbContext dbContext) : IReadOnlyRepository<TEntity> where TEntity : class
+public class GenericReadOnlyRepository<TEntity>(AppDbContext dbContext) : IReadOnlyRepository<TEntity> where TEntity : class, IHasId
 {
-    public async Task<TEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public virtual async Task<TEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var entity = await dbContext.Set<TEntity>().FindAsync([id], cancellationToken);
+        var entity = await dbContext.Set<TEntity>().AsNoTracking().FirstOrDefaultAsync(entity => entity.Id == id, cancellationToken);
 
         return entity;
     }

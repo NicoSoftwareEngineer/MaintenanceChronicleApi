@@ -6,6 +6,13 @@ public class GenericRepository<TEntity>(AppDbContext dbContext) : GenericReadOnl
 {
     private readonly AppDbContext _dbContext = dbContext;
 
+    public override async Task<TEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var entity = await dbContext.Set<TEntity>().FindAsync([id], cancellationToken);
+
+        return entity;
+    }
+
     public async Task AddAsync(ICollection<TEntity> entities, CancellationToken cancellationToken = default)
     { 
         await _dbContext.Set<TEntity>().AddRangeAsync(entities, cancellationToken);

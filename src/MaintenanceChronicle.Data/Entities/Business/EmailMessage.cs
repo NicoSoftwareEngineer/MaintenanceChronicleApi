@@ -1,3 +1,4 @@
+using MaintenanceChronicle.Data.Interfaces;
 using NodaTime;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ using MaintenanceChronicle.Utilities.Constants;
 
 namespace MaintenanceChronicle.Data.Entities.Business;
 [Table(nameof(EmailMessage))]
-public class EmailMessage
+public class EmailMessage : IHasId
 {
     public Guid Id { get; set; }
 
