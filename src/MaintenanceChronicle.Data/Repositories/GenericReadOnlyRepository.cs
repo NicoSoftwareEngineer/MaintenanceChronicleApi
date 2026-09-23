@@ -7,16 +7,18 @@ namespace MaintenanceChronicle.Data.Repositories;
 
 public class GenericReadOnlyRepository<TEntity>(AppDbContext dbContext) : IReadOnlyRepository<TEntity> where TEntity : class, IHasId
 {
+    protected AppDbContext DbContext { get; } = dbContext;
+
     public virtual async Task<TEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var entity = await dbContext.Set<TEntity>().AsNoTracking().FirstOrDefaultAsync(entity => entity.Id == id, cancellationToken);
+        var entity = await DbContext.Set<TEntity>().AsNoTracking().FirstOrDefaultAsync(entity => entity.Id == id, cancellationToken);
 
         return entity;
     }
 
     public async Task<IReadOnlyList<TEntity>> ListAsync(CancellationToken cancellationToken = default, params Expression<Func<TEntity, object>>[] includes)
     {
-        IQueryable<TEntity> entities = dbContext.Set<TEntity>();
+        IQueryable<TEntity> entities = DbContext.Set<TEntity>();
 
         foreach (var include in includes)
         {
