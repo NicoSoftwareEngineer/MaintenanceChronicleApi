@@ -1,7 +1,8 @@
 using MaintenanceChronicle.Application.Contracts.MaintenanceReminders.Commands;
 using MaintenanceChronicle.Application.Contracts.MaintenanceReminders.Queries.Dto;
-using MaintenanceChronicle.Data;
+using MaintenanceChronicle.Data.Entities.Business;
 using MaintenanceChronicle.Data.Interfaces;
+using MaintenanceChronicle.Infrastructure.Persistence;
 using MaintenanceChronicle.Utilities.Error;
 using MediatR;
 using NodaTime;
@@ -10,13 +11,12 @@ namespace MaintenanceChronicle.Application.MaintenanceReminders.Commands;
 /// <summary>
 /// Handler for <see cref="UpdateMaintenanceReminderCommand"/>
 /// </summary>
-public class UpdateMaintenanceReminderCommandHandler(AppDbContext dbContext, IClock clock) : IRequestHandler<UpdateMaintenanceReminderCommand, MaintenanceReminderDetailDto>
+public class UpdateMaintenanceReminderCommandHandler(IRepository<MaintenanceReminder> reminderRepository, IUnitOfWork uow, IClock clock) : IRequestHandler<UpdateMaintenanceReminderCommand, MaintenanceReminderDetailDto>
 {
     public async Task<MaintenanceReminderDetailDto> Handle(UpdateMaintenanceReminderCommand request, CancellationToken cancellationToken)
     {
         // Get current reminder from db
-        var maintenanceReminder = await dbContext.MaintenanceReminders
-            .FindAsync([request.Id], cancellationToken);
+        var maintenanceReminder = await reminderRepository.GetByIdAsync(request.Id, cancellationToken);
         if (maintenanceReminder == null)
         {
             throw new BadRequestException(ErrorType.MaintenanceReminderNotFound);
@@ -29,7 +29,7 @@ public class UpdateMaintenanceReminderCommandHandler(AppDbContext dbContext, ICl
 
         maintenanceReminder.SetModifyBy(request.UserId, clock.GetCurrentInstant());
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await uow.SaveChangesAsync(cancellationToken);
         return dto;
     }
 }
