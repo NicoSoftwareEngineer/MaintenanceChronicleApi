@@ -1,6 +1,7 @@
 using MaintenanceChronicle.Application.Contracts.EmailMessages.Commands;
 using MaintenanceChronicle.Application.Contracts.EmailMessages.Commands.Dto;
-using MaintenanceChronicle.Data;
+using MaintenanceChronicle.Data.Entities.Business;
+using MaintenanceChronicle.Infrastructure.Persistence;
 using MaintenanceChronicle.Utilities.Options;
 using MediatR;
 using Microsoft.Extensions.Options;
@@ -10,7 +11,7 @@ namespace MaintenanceChronicle.Application.EmailMessages.Commands;
 /// <summary>
 /// Handler for <see cref="CreateNewEmailMessageCommand"/>
 /// </summary>
-public class CreateNewEmailMessageCommandHandler(AppDbContext dbContext, IClock clock, IOptions<EnvironmentOptions> environmentOptions) : IRequestHandler<CreateNewEmailMessageCommand, Guid>
+public class CreateNewEmailMessageCommandHandler(IRepository<EmailMessage> emailRepository, IUnitOfWork uow, IClock clock, IOptions<EnvironmentOptions> environmentOptions) : IRequestHandler<CreateNewEmailMessageCommand, Guid>
 {
     public async Task<Guid> Handle(CreateNewEmailMessageCommand request, CancellationToken cancellationToken)
     {
@@ -19,8 +20,8 @@ public class CreateNewEmailMessageCommandHandler(AppDbContext dbContext, IClock 
 
         var entity = request.NewEmailMessage.ToEntity(clock.GetCurrentInstant());
 
-        await dbContext.AddAsync(entity, cancellationToken);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await emailRepository.AddAsync(entity, cancellationToken);
+        await uow.SaveChangesAsync(cancellationToken);
 
         return entity.Id;
     }

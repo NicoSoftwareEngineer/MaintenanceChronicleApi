@@ -1,5 +1,6 @@
 using MaintenanceChronicle.Application.Contracts.EmailMessages.Commands;
-using MaintenanceChronicle.Data;
+using MaintenanceChronicle.Data.Entities.Business;
+using MaintenanceChronicle.Infrastructure.Persistence;
 using MaintenanceChronicle.Utilities.Error;
 using MediatR;
 using Microsoft.Extensions.Options;
@@ -11,12 +12,12 @@ namespace MaintenanceChronicle.Application.EmailMessages.Commands;
 /// <summary>
 /// Handler for <see cref="SendEmailMessageCommand"/>
 /// </summary>
-public class SendEmailMessageCommandHandler(AppDbContext dbContext, IOptions<SmtpOptions> smtpOptions) : IRequestHandler<SendEmailMessageCommand>
+public class SendEmailMessageCommandHandler(IRepository<EmailMessage> emailRepository, IUnitOfWork uow, IOptions<SmtpOptions> smtpOptions) : IRequestHandler<SendEmailMessageCommand>
 {
     public async Task Handle(SendEmailMessageCommand request, CancellationToken cancellationToken)
     {
         // Find the email message
-        var emailMessage = await dbContext.EmailMessages.FindAsync([request.MessageId], cancellationToken);
+        var emailMessage = await emailRepository.GetByIdAsync(request.MessageId, cancellationToken);
         if (emailMessage == null)
         {
             throw new BadRequestException(ErrorType.EmailMessageNotFound);
@@ -52,6 +53,6 @@ public class SendEmailMessageCommandHandler(AppDbContext dbContext, IOptions<Smt
 
         emailMessage.Sent = true;
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await uow.SaveChangesAsync(cancellationToken);
     }
 }
