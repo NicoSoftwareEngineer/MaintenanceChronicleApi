@@ -1,6 +1,6 @@
 ﻿namespace MaintenanceChronicle.Infrastructure.Persistence;
 
-public interface ISpecification<T>
+public interface ISpecification<TEntity>
 {
-    public Task<T> ApplyAsync(IQueryable<T> queryable, CancellationToken cancellationToken = default);
+    public Task<TEntity?> ApplyAsync(IQueryable<TEntity> queryable, CancellationToken cancellationToken = default);
 }

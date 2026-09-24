@@ -4,13 +4,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MaintenanceChronicle.Data.Specifications;
 
-public class CustomerForLocationSpecification(Guid locationId) : ISpecification<Customer?>
+public class CustomerForLocationSpecification(Guid locationId) : ISpecification<Customer>
 {
-    public async Task<Customer?> ApplyAsync(IQueryable<Customer?> queryable, CancellationToken cancellationToken = default)
+    public async Task<Customer?> ApplyAsync(IQueryable<Customer> queryable, CancellationToken cancellationToken = default)
     {
         var customer = await queryable
-            .FirstOrDefaultAsync(customer => customer != null && 
-                                             customer.Locations
+            .Include(c => c.Locations)
+            .FirstOrDefaultAsync(customer => customer.Locations
                                                  .Any(location => location.Id == locationId),
                 cancellationToken);
 
