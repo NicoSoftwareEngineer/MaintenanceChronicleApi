@@ -12,6 +12,11 @@ public class GenericRepository<TEntity>(AppDbContext dbContext) : GenericReadOnl
         return entity;
     }
 
+    public override async Task<TEntity?> GetBySpecificationAsync(ISpecification<TEntity> specification, CancellationToken cancellationToken = default)
+    {
+        return await specification.ApplyAsync(DbContext.Set<TEntity>(), cancellationToken);
+    }
+
     public async Task AddAsync(ICollection<TEntity> entities, CancellationToken cancellationToken = default)
     { 
         await DbContext.Set<TEntity>().AddRangeAsync(entities, cancellationToken);

@@ -16,7 +16,7 @@ public class GenericReadOnlyRepository<TEntity>(AppDbContext dbContext) : IReadO
         return entity;
     }
 
-    public async Task<TEntity?> GetBySpecificationAsync(ISpecification<TEntity> specification, CancellationToken cancellationToken = default)
+    public virtual async Task<TEntity?> GetBySpecificationAsync(ISpecification<TEntity> specification, CancellationToken cancellationToken = default)
     {
         return await specification.ApplyAsync(DbContext.Set<TEntity>().AsNoTracking(), cancellationToken);
     }
