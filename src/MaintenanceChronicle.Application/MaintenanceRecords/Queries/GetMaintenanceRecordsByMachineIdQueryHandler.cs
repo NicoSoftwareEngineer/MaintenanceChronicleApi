@@ -1,29 +1,31 @@
 using MaintenanceChronicle.Application.Contracts.MaintenanceRecords.Queries;
 using MaintenanceChronicle.Application.Contracts.MaintenanceRecords.Queries.Dto;
-using MaintenanceChronicle.Data;
+using MaintenanceChronicle.Data.Entities.Business;
+using MaintenanceChronicle.Data.Specifications;
+using MaintenanceChronicle.Infrastructure.Persistence;
 using MaintenanceChronicle.Utilities.Error;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace MaintenanceChronicle.Application.MaintenanceRecords.Queries;
 /// <summary>
 /// Handler for <see cref="GetMaintenanceRecordsByMachineIdQuery"/>.
 /// </summary>
-public class GetMaintenanceRecordsByMachineIdQueryHandler(AppDbContext dbContext) : IRequestHandler<GetMaintenanceRecordsByMachineIdQuery, List<MaintenanceRecordInListForMachineDto>>
+public class GetMaintenanceRecordsByMachineIdQueryHandler(
+    IReadOnlyRepository<Machine> machineReadOnlyRepository,
+    IReadOnlyRepository<MaintenanceRecord> recordReadOnlyRepository) : IRequestHandler<GetMaintenanceRecordsByMachineIdQuery, List<MaintenanceRecordInListForMachineDto>>
 {
     public async Task<List<MaintenanceRecordInListForMachineDto>> Handle(GetMaintenanceRecordsByMachineIdQuery request,
         CancellationToken cancellationToken)
     {
-        // Get machine with maintenance records
-        var machine = await dbContext.Machines.Include(m => m.MaintenanceRecords)
-            .FirstOrDefaultAsync(m => m.Id == request.MachineId, cancellationToken: cancellationToken);
+        var machine = await machineReadOnlyRepository.GetByIdAsync(request.MachineId, cancellationToken);
         if (machine == null)
         {
             throw new BadRequestException(ErrorType.MachineNotFound);
         }
-        // Convert maintenance records to DTO
-        var records = machine.MaintenanceRecords.Select(m => m.ToListForMachineDto()).ToList();
 
-        return records;
+        var specification = new MaintenanceRecordsForMachineSpecification(request.MachineId);
+        var records = await recordReadOnlyRepository.ListBySpecificationAsync(specification, cancellationToken);
+
+        return records.Select(record => record.ToListForMachineDto()).ToList();
     }
 }
