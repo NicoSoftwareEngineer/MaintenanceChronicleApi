@@ -1,19 +1,19 @@
 using MaintenanceChronicle.Application.Contracts.LocationContactUsers.Queries.Dto;
 using MaintenanceChronicle.Application.Contracts.Utils.Queries;
-using MaintenanceChronicle.Data;
+using MaintenanceChronicle.Data.Entities.Account;
+using MaintenanceChronicle.Infrastructure.Persistence;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace MaintenanceChronicle.Application.Locations.Queries;
 /// <summary>
-/// Handler for <see cref="GetListOfAllPossibleContactsQuery"/>.
+/// Handler for <see cref="GetListOfEntityQuery{LocationInListDto}"/>.
 /// </summary>
-public class GetListOfAllPossibleContactsQueryHandler(AppDbContext dbContext) : IRequestHandler<GetListOfEntityQuery<LocationContactInListDto>, List<LocationContactInListDto>>
+public class GetListOfAllPossibleContactsQueryHandler(IReadOnlyRepository<User> userReadOnlyRepository) : IRequestHandler<GetListOfEntityQuery<LocationContactInListDto>, List<LocationContactInListDto>>
 {
     public async Task<List<LocationContactInListDto>> Handle(GetListOfEntityQuery<LocationContactInListDto> request,
         CancellationToken cancellationToken)
     {
-        var users = await dbContext.Users.Select(u => u.ToLocationContactInListDto()).ToListAsync(cancellationToken);
-        return users;
+        var users = await userReadOnlyRepository.ListAsync(cancellationToken);
+        return users.Select(user => user.ToLocationContactInListDto()).ToList();
     }
 }
