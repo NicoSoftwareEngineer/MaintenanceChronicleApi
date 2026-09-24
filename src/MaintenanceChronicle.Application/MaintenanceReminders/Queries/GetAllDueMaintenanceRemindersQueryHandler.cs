@@ -1,24 +1,22 @@
 using MaintenanceChronicle.Application.Contracts.MaintenanceReminders.Queries;
 using MaintenanceChronicle.Application.Contracts.MaintenanceReminders.Queries.Dto;
-using MaintenanceChronicle.Data;
+using MaintenanceChronicle.Data.Entities.Business;
+using MaintenanceChronicle.Data.Specifications;
+using MaintenanceChronicle.Infrastructure.Persistence;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using NodaTime;
 
 namespace MaintenanceChronicle.Application.MaintenanceReminders.Queries;
 /// <summary>
 /// Handler for <see cref="GetAllDueMaintenanceRemindersQuery"/>.
 /// </summary>
-public class GetAllDueMaintenanceRemindersQueryHandler(AppDbContext dbContext, IClock clock) : IRequestHandler<GetAllDueMaintenanceRemindersQuery, List<DueMaintenanceReminderDto>>
+public class GetAllDueMaintenanceRemindersQueryHandler(IReadOnlyRepository<MaintenanceReminder> reminderReadOnlyRepository, IClock clock) : IRequestHandler<GetAllDueMaintenanceRemindersQuery, List<DueMaintenanceReminderDto>>
 {
     public async Task<List<DueMaintenanceReminderDto>> Handle(GetAllDueMaintenanceRemindersQuery request, CancellationToken cancellationToken)
     {
-        var dueMaintenanceReminders = await dbContext.MaintenanceReminders
-            .Include(mr => mr.Machine)
-            .Where(mr => mr.Date <= clock.GetCurrentInstant())
-            .Select(mr => mr.ToDueDto())
-            .ToListAsync(cancellationToken);
+        var specification = new DueMaintenanceRemindersSpecification(clock.GetCurrentInstant());
+        var dueMaintenanceReminders = await reminderReadOnlyRepository.ListBySpecificationAsync(specification, cancellationToken);
 
-        return dueMaintenanceReminders;
+        return dueMaintenanceReminders.Select(reminder => reminder.ToDueDto()).ToList();
     }
 }
