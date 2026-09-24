@@ -1,4 +1,3 @@
-
 using MaintenanceChronicle.Application.Contracts.LocationContactUsers.Queries;
 using MaintenanceChronicle.Application.Contracts.LocationContactUsers.Queries.Dto;
 using MaintenanceChronicle.Data.Entities.Account;

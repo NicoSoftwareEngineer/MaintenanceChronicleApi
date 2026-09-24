@@ -1,29 +1,30 @@
 using MaintenanceChronicle.Application.Contracts.Machines.Queries;
 using MaintenanceChronicle.Application.Contracts.Machines.Queries.Dto;
-using MaintenanceChronicle.Data;
+using MaintenanceChronicle.Data.Entities.Business;
+using MaintenanceChronicle.Data.Specifications;
+using MaintenanceChronicle.Infrastructure.Persistence;
 using MaintenanceChronicle.Utilities.Error;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace MaintenanceChronicle.Application.Machines.Queries;
 /// <summary>
 /// Handler for <see cref="GetMachinesForLocationQuery"/>.
 /// </summary>
-public class GetMachinesForLocationQueryHandler(AppDbContext dbContext) : IRequestHandler<GetMachinesForLocationQuery, List<MachineInListForLocationDto>>
+public class GetMachinesForLocationQueryHandler(
+    IReadOnlyRepository<Location> locationReadOnlyRepository,
+    IReadOnlyRepository<Machine> machineReadOnlyRepository) : IRequestHandler<GetMachinesForLocationQuery, List<MachineInListForLocationDto>>
 {
     public async Task<List<MachineInListForLocationDto>> Handle(GetMachinesForLocationQuery request, CancellationToken cancellationToken)
     {
-        if (!await dbContext.Locations.AnyAsync(l => l.Id == request.LocationId, cancellationToken: cancellationToken))
+        var location = await locationReadOnlyRepository.GetByIdAsync(request.LocationId, cancellationToken);
+        if (location == null)
         {
             throw new BadRequestException(ErrorType.LocationNotFound);
         }
 
-        var machines = await dbContext.Machines
-            .Include(m => m.Location)
-            .Where(m => m.LocationId == request.LocationId)
-            .Select(m => m.ToMachineInListForLocationDto())
-            .ToListAsync(cancellationToken: cancellationToken);
+        var specification = new MachinesForLocationSpecification(request.LocationId);
+        var machines = await machineReadOnlyRepository.ListBySpecificationAsync(specification, cancellationToken);
 
-        return machines;
+        return machines.Select(machine => machine.ToMachineInListForLocationDto()).ToList();
     }
 }
