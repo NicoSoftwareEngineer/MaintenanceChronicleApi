@@ -1,18 +1,15 @@
 using MaintenanceChronicle.Application.Contracts.EmailMessages.Commands;
+using MaintenanceChronicle.Application.EmailMessages;
 using MaintenanceChronicle.Data.Entities.Business;
 using MaintenanceChronicle.Infrastructure.Persistence;
 using MaintenanceChronicle.Utilities.Error;
 using MediatR;
-using Microsoft.Extensions.Options;
-using MimeKit;
-using System.Net.Mail;
-using MaintenanceChronicle.Utilities.Options;
 
 namespace MaintenanceChronicle.Application.EmailMessages.Commands;
 /// <summary>
 /// Handler for <see cref="SendEmailMessageCommand"/>
 /// </summary>
-public class SendEmailMessageCommandHandler(IRepository<EmailMessage> emailRepository, IUnitOfWork uow, IOptions<SmtpOptions> smtpOptions) : IRequestHandler<SendEmailMessageCommand>
+public class SendEmailMessageCommandHandler(IRepository<EmailMessage> emailRepository, IUnitOfWork uow, IEmailSender emailSender) : IRequestHandler<SendEmailMessageCommand>
 {
     public async Task Handle(SendEmailMessageCommand request, CancellationToken cancellationToken)
     {
@@ -29,27 +26,7 @@ public class SendEmailMessageCommandHandler(IRepository<EmailMessage> emailRepos
             throw new BadRequestException(ErrorType.EmailAlreadySent);
         }
 
-        // Create the email message
-        using var mail = new MailMessage
-        {
-            Subject = emailMessage.Subject,
-            Body = emailMessage.Body,
-            IsBodyHtml = true,
-            From = new MailAddress(emailMessage.FromEmail, emailMessage.FromName),
-        };
-        // Add the recipients
-        foreach (var recipients in emailMessage.Recipients)
-        {
-            mail.To.Add(new MailAddress(recipients.Key, recipients.Value));
-
-        }
-
-        // Send the email
-        using var smtp = new MailKit.Net.Smtp.SmtpClient();
-        smtp.ServerCertificateValidationCallback = (s, c, h, e) => true;
-        await smtp.ConnectAsync(smtpOptions.Value.Host, smtpOptions.Value.Port, cancellationToken: cancellationToken);
-        await smtp.AuthenticateAsync(smtpOptions.Value.Username, smtpOptions.Value.Password, cancellationToken);
-        await smtp.SendAsync((MimeMessage)mail, cancellationToken);
+        await emailSender.SendAsync(emailMessage, cancellationToken);
 
         emailMessage.Sent = true;
 
