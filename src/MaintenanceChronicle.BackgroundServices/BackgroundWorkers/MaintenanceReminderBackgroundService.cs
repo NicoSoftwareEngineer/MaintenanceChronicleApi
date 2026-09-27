@@ -8,7 +8,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace MaintenanceChronicle.BackgroundServices.BackgroundWorkers;
 
-public class MaintenanceReminderBackgroundService(IServiceProvider provider) : BackgroundService
+public class MaintenanceReminderBackgroundService(ISystemTenantScopeFactory scopeFactory) : BackgroundService
 {
     /// <summary>
     /// Function definition from BackgroundService, which gets called at the start of an app
@@ -30,7 +30,7 @@ public class MaintenanceReminderBackgroundService(IServiceProvider provider) : B
         while (!cancellationToken.IsCancellationRequested)
         {
             //Gets mediator
-            using var scope = provider.CreateScope();
+            using var scope = scopeFactory.CreateScope();
             var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 
             //Gets all due reminders

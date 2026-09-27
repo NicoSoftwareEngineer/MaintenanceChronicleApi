@@ -10,6 +10,7 @@ using MaintenanceChronicle.Application.Contracts.MaintenanceReminders.Queries.Dt
 using MaintenanceChronicle.Application.Contracts.Utils.Commands;
 using MaintenanceChronicle.Application.Contracts.Utils.Queries;
 using MaintenanceChronicle.Application.Machines.Commands;
+using MaintenanceChronicle.Api.Utils;
 using MaintenanceChronicle.Data.Entities.Business;
 using MaintenanceChronicle.Utilities.Constants;
 using MaintenanceChronicle.Utilities.Helpers;
@@ -75,6 +76,7 @@ public class MachineController(IMediator mediator) : ControllerBase
     /// <param name="id">ID of machine to query for</param>
     /// <returns><see cref="MachineDetailDto"/></returns>
     [AllowAnonymous]
+    [AllowTenantlessDataAccess]
     [HttpGet("/api/v1/machines/{id:guid}")]
     public async Task<ActionResult<MachineDetailDto>> GetMachineById([FromRoute] Guid id)
     {
@@ -118,6 +120,7 @@ public class MachineController(IMediator mediator) : ControllerBase
     /// <param name="id">Specified machine id</param>
     /// <returns>Machines <see cref="LocationInListDto"/></returns>
     [AllowAnonymous]
+    [AllowTenantlessDataAccess]
     [HttpGet("/api/v1/machines/{id:guid}/location")]
     public async Task<ActionResult<List<LocationInListDto>>> GetLocationForMachine(
         [FromRoute] Guid id)

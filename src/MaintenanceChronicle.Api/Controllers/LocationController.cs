@@ -9,6 +9,7 @@ using MaintenanceChronicle.Application.Contracts.Machines.Queries;
 using MaintenanceChronicle.Application.Contracts.Machines.Queries.Dto;
 using MaintenanceChronicle.Application.Contracts.Utils.Commands;
 using MaintenanceChronicle.Application.Contracts.Utils.Queries;
+using MaintenanceChronicle.Api.Utils;
 using MaintenanceChronicle.Data.Entities.Business;
 using MaintenanceChronicle.Utilities.Constants;
 using MaintenanceChronicle.Utilities.Helpers;
@@ -129,6 +130,7 @@ public class LocationController(IMediator mediator) : ControllerBase
     /// <param name="id">ID of location to get contacts for</param>
     /// <returns>List of <see cref="LocationContactInListDto"/></returns>
     [AllowAnonymous]
+    [AllowTenantlessDataAccess]
     [HttpGet("/api/v1/locations/{id:guid}/contacts")]
     public async Task<ActionResult<List<LocationContactInListDto>>> GetContactsForLocation([FromRoute] Guid id)
     {
