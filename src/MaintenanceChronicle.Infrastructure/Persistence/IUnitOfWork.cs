@@ -1,6 +1,6 @@
 ﻿namespace MaintenanceChronicle.Infrastructure.Persistence;
 
-public interface IUnitOfWork : IAsyncDisposable
+public interface IUnitOfWork
 {
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }
