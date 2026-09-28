@@ -10,7 +10,7 @@ namespace MaintenanceChronicle.Application.Customers.Queries;
 /// <summary>
 /// Handler for <see cref="GetCustomerDetailForLocationQuery"/>.
 /// </summary>
-public class GetCustomerDetailForLocationQueryHandler(IReadOnlyRepository<Customer?> customerReadOnlyRepository) : IRequestHandler<GetCustomerDetailForLocationQuery, CustomerDetailForLocationDto>
+public class GetCustomerDetailForLocationQueryHandler(IReadOnlyRepository<Customer> customerReadOnlyRepository) : IRequestHandler<GetCustomerDetailForLocationQuery, CustomerDetailForLocationDto>
 {
     public async Task<CustomerDetailForLocationDto> Handle(GetCustomerDetailForLocationQuery request,
         CancellationToken cancellationToken)

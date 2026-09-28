@@ -42,9 +42,9 @@ public class GetCustomerDetailForLocationQueryHandlerTests
         ];
 
         var query = new GetCustomerDetailForLocationQuery(locationId);
-        var customerRepository = Substitute.For<IReadOnlyRepository<Customer?>>();
+        var customerRepository = Substitute.For<IReadOnlyRepository<Customer>>();
         customerRepository.GetBySpecificationAsync(
-                Arg.Is<ISpecification<Customer?>>(specification => specification is CustomerForLocationSpecification),
+                Arg.Is<ISpecification<Customer>>(specification => specification is CustomerForLocationSpecification),
                 cancellationToken)
             .Returns(customers.SingleOrDefault(customer => customer.Locations.Any(location => location.Id == query.LocationId)));
 
@@ -66,7 +66,7 @@ public class GetCustomerDetailForLocationQueryHandlerTests
         result.Should().BeEquivalentTo(expected);
         await customerRepository.Received(1)
             .GetBySpecificationAsync(
-                Arg.Is<ISpecification<Customer?>>(specification => specification is CustomerForLocationSpecification),
+                Arg.Is<ISpecification<Customer>>(specification => specification is CustomerForLocationSpecification),
                 cancellationToken);
     }
 
@@ -83,9 +83,9 @@ public class GetCustomerDetailForLocationQueryHandlerTests
         ];
 
         var query = new GetCustomerDetailForLocationQuery(Guid.NewGuid());
-        var customerRepository = Substitute.For<IReadOnlyRepository<Customer?>>();
+        var customerRepository = Substitute.For<IReadOnlyRepository<Customer>>();
         customerRepository.GetBySpecificationAsync(
-                Arg.Is<ISpecification<Customer?>>(specification => specification is CustomerForLocationSpecification),
+                Arg.Is<ISpecification<Customer>>(specification => specification is CustomerForLocationSpecification),
                 cancellationToken)
             .Returns(customers.SingleOrDefault(customer => customer.Locations.Any(location => location.Id == query.LocationId)));
 
@@ -99,7 +99,7 @@ public class GetCustomerDetailForLocationQueryHandlerTests
         exception.Which.ErrorType.Should().Be(ErrorType.LocationNotFound);
         await customerRepository.Received(1)
             .GetBySpecificationAsync(
-                Arg.Is<ISpecification<Customer?>>(specification => specification is CustomerForLocationSpecification),
+                Arg.Is<ISpecification<Customer>>(specification => specification is CustomerForLocationSpecification),
                 cancellationToken);
     }
 
@@ -112,9 +112,9 @@ public class GetCustomerDetailForLocationQueryHandlerTests
         IReadOnlyList<Customer> customers = [];
 
         var query = new GetCustomerDetailForLocationQuery(Guid.NewGuid());
-        var customerRepository = Substitute.For<IReadOnlyRepository<Customer?>>();
+        var customerRepository = Substitute.For<IReadOnlyRepository<Customer>>();
         customerRepository.GetBySpecificationAsync(
-                Arg.Is<ISpecification<Customer?>>(specification => specification is CustomerForLocationSpecification),
+                Arg.Is<ISpecification<Customer>>(specification => specification is CustomerForLocationSpecification),
                 cancellationToken)
             .Returns(customers.SingleOrDefault(customer => customer.Locations.Any(location => location.Id == query.LocationId)));
 
@@ -128,7 +128,7 @@ public class GetCustomerDetailForLocationQueryHandlerTests
         exception.Which.ErrorType.Should().Be(ErrorType.LocationNotFound);
         await customerRepository.Received(1)
             .GetBySpecificationAsync(
-                Arg.Is<ISpecification<Customer?>>(specification => specification is CustomerForLocationSpecification),
+                Arg.Is<ISpecification<Customer>>(specification => specification is CustomerForLocationSpecification),
                 cancellationToken);
     }
 }
