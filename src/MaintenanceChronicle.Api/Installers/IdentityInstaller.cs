@@ -1,6 +1,6 @@
 ﻿using MaintenanceChronicle.Data;
 using MaintenanceChronicle.Data.Entities.Account;
-using MaintenanceChronicle.Infrastructure;
+using MaintenanceChronicle.Infrastructure.DependencyInjection;
 using MaintenanceChronicle.Utilities.Error;
 using MaintenanceChronicle.Utilities.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

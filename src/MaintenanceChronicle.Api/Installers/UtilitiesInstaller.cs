@@ -1,5 +1,6 @@
 ﻿using MaintenanceChronicle.Api.Utils;
-using MaintenanceChronicle.Infrastructure;
+using MaintenanceChronicle.Infrastructure.DependencyInjection;
+using MaintenanceChronicle.BackgroundServices;
 using MaintenanceChronicle.Utilities.Helpers;
 using NodaTime;
 
@@ -11,12 +12,13 @@ public class UtilitiesInstaller : IServiceInstaller
     public void Install(IServiceCollection services, IConfiguration configuration)
     {
         // Add services to the container.
-        //These services are needed for the ICurrentTenantProvider
+        //These services are needed for tenant access resolution
         services.AddHttpContextAccessor();
         services.AddDataProtection();
 
-        //Method for global filter into db
-        services.AddScoped<ICurrentTenantProvider, CurrentTenantProvider>();
+        services.AddScoped<TenantAccessChecker>();
+        services.AddScoped<ITenantAccessChecker>(provider => provider.GetRequiredService<TenantAccessChecker>());
+        services.AddSingleton<ISystemTenantScopeFactory, SystemTenantScopeFactory>();
 
         //Clock
         services.AddSingleton<IClock>(SystemClock.Instance);

@@ -14,24 +14,24 @@ public class MachineInMaintenanceRecordDetailDto
     public required string InUseSince { get; set; }
 }
 /// <summary>
-/// Extension methods for <see cref="MaintenanceRecord"/> entity.
+/// Extension methods for <see cref="Machine"/> entity.
 /// </summary>
 public static class MachineInMaintenanceRecordDetailExtension
 {
     /// <summary>
-    /// Converts <see cref="MaintenanceRecord"/> to <see cref="MachineInMaintenanceRecordDetailDto"/>.
+    /// Converts <see cref="Machine"/> to <see cref="MachineInMaintenanceRecordDetailDto"/>.
     /// </summary>
-    /// <param name="entity"><see cref="MaintenanceRecord"/> to convert</param>
+    /// <param name="entity"><see cref="Machine"/> to convert</param>
     /// <returns>Converted entity to  <see cref="MachineInMaintenanceRecordDetailDto"/></returns>
-    public static MachineInMaintenanceRecordDetailDto ToMachineDto(this MaintenanceRecord entity) =>
+    public static MachineInMaintenanceRecordDetailDto ToMachineDto(this Machine entity) =>
         new MachineInMaintenanceRecordDetailDto
         {
-            Id = entity.MachineId,
-            Model = entity.Machine.Model,
-            Manufacture = entity.Machine.Manufacture,
-            Color = entity.Machine.Color,
-            InUseSince =  InstantPattern.CreateWithInvariantCulture("dd.MM.yyyy").Format(entity.Machine.InUseSince),
-            SerialNumber = entity.Machine.SerialNumber,
-            LocationName = entity.Machine.Location.Name,
+            Id = entity.Id,
+            Model = entity.Model,
+            Manufacture = entity.Manufacture,
+            Color = entity.Color,
+            InUseSince =  InstantPattern.CreateWithInvariantCulture("dd.MM.yyyy").Format(entity.InUseSince),
+            SerialNumber = entity.SerialNumber,
+            LocationName = entity.Location.Name,
         };
 }

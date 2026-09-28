@@ -7,7 +7,7 @@ using NodaTime;
 namespace MaintenanceChronicle.Data.Entities.Account;
 
 [Table(nameof(User))]
-public class User : IdentityUser<Guid>, ITenant, ITrackable
+public class User : IdentityUser<Guid>, ITenant, ITrackable, IHasId
 {
     public required string FirstName { get; set; }
     public required string LastName { get; set; }

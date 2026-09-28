@@ -1,122 +1,77 @@
-# 🛠️ MaintenanceChronicleApi
+# Maintenance Chronicle developer documentation
 
-**MaintenanceChronicleApi** is a backend REST API built with **ASP.NET Core** using a **CQS (Command Query Separation)** architecture and backed by a **PostgreSQL** database. It is designed to handle tasks and workflows associated with maintenance tracking and management.
+Maintenance Chronicle is a .NET 9 REST API for managing customers, locations, machines, maintenance records, and reminders. It uses ASP.NET Core, PostgreSQL, and command/query handlers.
 
----
+This documentation is for developers working on the API. The [API reference](docs/) contains documentation generated from the source projects.
 
-## 📦 Tech Stack
+## Codebase guide
 
-- **ASP.NET Core Web API**
-- **PostgreSQL**
-- **CQS Architecture**
-- **JWT Authentication**
-- **SMTP Integration (for email workflows)**
+| Project | Responsibility |
+| --- | --- |
+| `MaintenanceChronicle.Api` | HTTP endpoints, authentication setup, and application startup |
+| `MaintenanceChronicle.Application` | Application use cases implemented as command handlers and queries |
+| `MaintenanceChronicle.Application.Contracts` | Requests and shared application contracts |
+| `MaintenanceChronicle.Data` | EF Core context, entities, repositories, specifications, and migrations |
+| `MaintenanceChronicle.Infrastructure` | Persistence interfaces and service registration contracts |
+| `MaintenanceChronicle.BackgroundServices` | Email and maintenance reminder workers |
+| `MaintenanceChronicle.Utilities` | Shared options, error handling, and utilities |
+| `MaintenanceChronicle.Application.Tests` | Application handler tests |
+| `MaintenanceChronicle.Integration.Tests` | Integration tests using a PostgreSQL test container |
+| `MaintenanceChronicle.Configurations` | Currently contains only a project file and is not included in the solution |
 
----
+The solution and projects are under `src/`. To trace an API operation, start at its controller, follow the request to its application handler, and inspect the persistence code the handler calls.
 
-## 🚀 Getting Started
+## Local setup
 
-### 1. Clone the Repository
+### Prerequisites
 
-```bash
-git clone https://github.com/NicoSoftEngineer/MaintenanceChronicleApi.git
-cd maintenanceChronicleApi
-```
+- .NET 9 SDK
+- PostgreSQL
+- Docker, if you want to run the integration tests
 
-### 2. Configure `appsettings.json`
+### Configure the API
 
-Before running the project, ensure you fill in the necessary fields in the `appsettings.json` configuration file.
+Use a PostgreSQL database intended for local development. The API reads its configuration from `src/MaintenanceChronicle.Api/appsettings.json` and standard ASP.NET Core configuration sources.
 
-Here is a sample structure:
-
-```json
-{
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft.AspNetCore": "Warning"
-    }
-  },
-  "AllowedHosts": "*",
-  "ConnectionStrings": {
-    "DbConnection": "your_postgresql_connection_string"
-  },
-  "EnvironmentOptions": {
-    "FrontendHostUrl": "url_of_ui",
-    "FrontendConfirmUrl": "/auth/email-confirm/[Email]/[ConfToken]",
-    "FrontendPasswordResetUrl": "/auth/password-reset/[Email]/[PasswordToken]",
-    "FrontendPasswordCre_ateUrl": "/auth/create-password/[Email]/[ConfToken]/[PasswordToken]",
-    "SenderEmail": "your_email",
-    "SenderName": "Maintenance Chronicle"
-  },
-  "SmtpOptions": {
-    "Host": "your_smtp_host",
-    "Port": "your_smtp_port",
-    "Username": "your_smtp_username",
-    "Password": "your_smtp_password"
-  },
-  "JwtOptions": {
-    "SecretKey": "your_very_long_secret_key",
-    "Issuer": "url_of_app",
-    "Audience": "url_of_ui",
-    "AccessTokenExpirationInMinutes": 30,
-    "RefreshTokenExpirationInDays": 14
-  }
-}
-```
-
-> ⚠️ Replace all placeholder values with your own credentials.
-
----
-
-## 🗃️ Database Setup
-
-Ensure you have a running PostgreSQL instance. Update the `DbConnection` string in `appsettings.json` accordingly.
-
-Run the migrations to create the database schema:
+Set your database connection string and a development JWT signing key with .NET user secrets:
 
 ```bash
-dotnet ef database update
+dotnet user-secrets set "ConnectionStrings:DbConnection" "Host=localhost;Port=5432;Database=maintenance_chronicle;Username=YOUR_USER;Password=YOUR_PASSWORD" --project src/MaintenanceChronicle.Api
+dotnet user-secrets set "JwtOptions:SecretKey" "YOUR_LONG_RANDOM_DEVELOPMENT_SECRET" --project src/MaintenanceChronicle.Api
 ```
 
----
+Review `JwtOptions:Issuer` and `JwtOptions:Audience` for your local client. Check the values in `EnvironmentOptions` for frontend links and sender details.
 
-## 🏃‍♂️ Running the Project
+Email features require a working SMTP server. Configure `SmtpOptions:Host`, `SmtpOptions:Port`, `SmtpOptions:Username`, and `SmtpOptions:Password`. Also set `EnvironmentOptions:SenderEmail` and `EnvironmentOptions:SenderName` to the sender details you intend to use. The checked-in SMTP values are empty, so email delivery will not work without this configuration. Keep SMTP credentials in user secrets or another local secret store.
 
-Use the .NET CLI to run the API locally:
+### Run the API
+
+From the repository root:
 
 ```bash
-dotnet run
+dotnet run --project src/MaintenanceChronicle.Api --launch-profile http
 ```
 
-The API will start on the default port (usually `https://localhost:5209`).
+With this launch profile, the API runs at `http://localhost:5209`. Swagger UI is available at `http://localhost:5209/swagger` in the Development environment.
 
----
+The API applies EF Core migrations on startup. Make sure its connection string points to the intended local database before running it.
 
-## 🧱 Architectural Overview
+## Build and test
 
-This project follows the **CQS (Command Query Separation)** pattern:
+From the repository root:
 
-- **Commands**: Used for write operations (e.g., create/update/delete).
-- **Queries**: Used for read operations (e.g., fetch by ID, list).
+```bash
+dotnet build src/MaintenanceChronicle.sln
+dotnet test src/MaintenanceChronicle.Application.Tests/MaintenanceChronicle.Application.Tests.csproj
+dotnet test src/MaintenanceChronicle.Integration.Tests/MaintenanceChronicle.Integration.Tests.csproj
+```
 
-This separation promotes cleaner logic, better testability, and a more maintainable codebase.
+The integration tests start a PostgreSQL container and require Docker to be running.
 
----
+## Documentation site
 
-## ✉️ Email Functionality
+DocFX builds this site from `Documentation/docfx.json` and generates the API reference from projects under `src/`:
 
-The API includes SMTP integration for:
-
-- Email confirmation
-- Password reset
-- Password creation
-
-Configure the `SmtpOptions` and `EnvironmentOptions` in `appsettings.json` to match your email provider and frontend URLs.
-
----
-
-## 🔐 Authentication
-
-Authentication is handled via **JWT (JSON Web Tokens)**. Ensure the `JwtOptions.SecretKey` is secure and sufficiently long.
-
+```bash
+docfx Documentation/docfx.json
+```

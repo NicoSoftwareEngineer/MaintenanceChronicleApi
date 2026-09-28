@@ -2,10 +2,20 @@
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
-namespace MaintenanceChronicle.Infrastructure;
+namespace MaintenanceChronicle.Infrastructure.DependencyInjection;
 
+/// <summary>
+/// Provides service registration through discovered installers.
+/// </summary>
 public static class ServiceInstallerExtensions
 {
+    /// <summary>
+    /// Finds installers in matching assemblies in the given directory and runs them in order.
+    /// </summary>
+    /// <param name="services">Service collection to add services to.</param>
+    /// <param name="configuration">Application configuration passed to each installer.</param>
+    /// <param name="basePath">Directory containing the assemblies to inspect.</param>
+    /// <returns>The service collection with the discovered services registered.</returns>
     public static IServiceCollection InstallServices(
         this IServiceCollection services,
         IConfiguration configuration,

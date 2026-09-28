@@ -1,24 +1,23 @@
 using MaintenanceChronicle.Application.Contracts.MaintenanceRecords.Commands;
 using MaintenanceChronicle.Application.Contracts.MaintenanceRecords.Commands.Dto;
-using MaintenanceChronicle.Data;
+using MaintenanceChronicle.Data.Entities.Business;
 using MaintenanceChronicle.Data.Interfaces;
+using MaintenanceChronicle.Infrastructure.Persistence;
 using MaintenanceChronicle.Utilities.Error;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using NodaTime;
 
 namespace MaintenanceChronicle.Application.MaintenanceRecords.Commands;
 /// <summary>
 /// Handler for <see cref="UpdateMaintenanceRecordCommand"/>
 /// </summary>
-public class UpdateMaintenanceRecordCommandHandler(AppDbContext dbContext, IClock clock) : IRequestHandler<UpdateMaintenanceRecordCommand, ManageMaintenanceRecordDetailDto>
+public class UpdateMaintenanceRecordCommandHandler(IReadOnlyRepository<Machine> machineReadOnlyRepository, IRepository<MaintenanceRecord> recordRepository, IUnitOfWork uow, IClock clock) : IRequestHandler<UpdateMaintenanceRecordCommand, ManageMaintenanceRecordDetailDto>
 {
     public async Task<ManageMaintenanceRecordDetailDto> Handle(UpdateMaintenanceRecordCommand request,
         CancellationToken cancellationToken)
     {
         // Check if the record exists
-        var entity = await dbContext.MaintenanceRecords.FindAsync([request.Id], cancellationToken);
+        var entity = await recordRepository.GetByIdAsync(request.Id, cancellationToken);
         if (entity == null)
         {
             throw new BadRequestException(ErrorType.MaintenanceRecordNotFound);
@@ -29,7 +28,7 @@ public class UpdateMaintenanceRecordCommandHandler(AppDbContext dbContext, ICloc
         request.Patch.ApplyTo(entityMapped);
         // Check if the machine exists
         // Need to check here, because the patch does not show if the machine exists
-        if (!await dbContext.Machines.AnyAsync(m => m.Id == entityMapped.MachineId, cancellationToken: cancellationToken))
+        if (await machineReadOnlyRepository.GetByIdAsync(entityMapped.MachineId, cancellationToken) is null)
         {
             throw new BadRequestException(ErrorType.MachineNotFound);
         }
@@ -37,7 +36,7 @@ public class UpdateMaintenanceRecordCommandHandler(AppDbContext dbContext, ICloc
         entityMapped.MapToEntity(entity);
         entity.SetModifyBy(request.UserId, clock.GetCurrentInstant());
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await uow.SaveChangesAsync(cancellationToken);
         return entity.ToManageDto();
     }
 }

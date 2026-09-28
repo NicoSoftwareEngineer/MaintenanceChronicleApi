@@ -11,9 +11,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace MaintenanceChronicle.Api.Controllers;
 
-/// <summary>
-/// Controller for managing maintenance reminders
-/// </summary>
 [ApiController]
 [Authorize(Roles = $"{RoleTypes.Admin},{RoleTypes.GlobalAdmin},{RoleTypes.Technician}")]
 [Route("api/v1/maintenance-reminders")]

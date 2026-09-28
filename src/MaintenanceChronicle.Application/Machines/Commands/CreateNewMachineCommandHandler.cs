@@ -1,8 +1,8 @@
-using System.Threading.Tasks.Dataflow;
 using MaintenanceChronicle.Application.Contracts.Machines.Commands;
 using MaintenanceChronicle.Application.Contracts.Machines.Commands.Dto;
-using MaintenanceChronicle.Data;
+using MaintenanceChronicle.Data.Entities.Business;
 using MaintenanceChronicle.Data.Interfaces;
+using MaintenanceChronicle.Infrastructure.Persistence;
 using MaintenanceChronicle.Utilities.Error;
 using MediatR;
 using NodaTime;
@@ -11,12 +11,11 @@ namespace MaintenanceChronicle.Application.Machines.Commands;
 /// <summary>
 /// Handler for <see cref="CreateNewMachineCommand"/>
 /// </summary>
-public class CreateNewMachineCommandHandler(AppDbContext dbContext, IClock clock) : IRequestHandler<CreateNewMachineCommand, Guid>
+public class CreateNewMachineCommandHandler(IReadOnlyRepository<Location> locationReadOnlyRepository, IRepository<Machine> machineRepository, IUnitOfWork uow, IClock clock) : IRequestHandler<CreateNewMachineCommand, Guid>
 {
     public async Task<Guid> Handle(CreateNewMachineCommand request, CancellationToken cancellationToken)
     {
-        if (await dbContext.Locations.FindAsync(new object[] { request.NewMachineDto.LocationId }, cancellationToken) ==
-            null)
+        if (await locationReadOnlyRepository.GetByIdAsync(request.NewMachineDto.LocationId, cancellationToken) is null)
         {
             throw new BadRequestException(ErrorType.LocationNotFound);
         }
@@ -25,8 +24,8 @@ public class CreateNewMachineCommandHandler(AppDbContext dbContext, IClock clock
         machineEntity.TenantId = Guid.Parse(request.TenantId);
         machineEntity.SetCreateBy(request.UserId, clock.GetCurrentInstant());
 
-        await dbContext.AddAsync(machineEntity, cancellationToken);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await machineRepository.AddAsync(machineEntity, cancellationToken);
+        await uow.SaveChangesAsync(cancellationToken);
 
         return machineEntity.Id;
     }

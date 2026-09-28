@@ -1,3 +1,5 @@
+using System.Globalization;
+using MaintenanceChronicle.Api.Utils;
 using MaintenanceChronicle.Application.Contracts.Customers.Commands;
 using MaintenanceChronicle.Application.Contracts.Customers.Commands.Dto;
 using MaintenanceChronicle.Application.Contracts.Customers.Queries.Dto;
@@ -63,16 +65,28 @@ public class CustomerController(IMediator mediator) : ControllerBase
     }
 
     /// <summary>
-    /// Updates customer with the given information
+    /// Gets a page of customers
     /// </summary>
-    /// <returns>List of <see cref="CustomerInListDto"/></returns>
+    /// <returns>A page of <see cref="CustomerInListDto"/> with a link to the next page</returns>
     [HttpGet("api/v1/customers")]
-    public async Task<ActionResult<List<CustomerInListDto>>> GetCustomerList()
+    public async Task<ActionResult<PagedResponse<CustomerInListDto>>> GetCustomerList(
+        [FromQuery] PaginationQuery pagination)
     {
-        var getCustomerListQuery = new GetListOfEntityQuery<CustomerInListDto>();
+        var getCustomerListQuery = new GetListOfEntityQuery<CustomerInListDto>(new PageRequest(pagination.Page, pagination.PageSize));
         var customers = await mediator.Send(getCustomerListQuery);
 
-        return Ok(customers);
+        string? next = null;
+        if (customers.Count > pagination.PageSize)
+        {
+            var queryString = QueryString.Create(
+            [
+                new KeyValuePair<string, string?>("page", (pagination.Page + 1).ToString(CultureInfo.InvariantCulture)),
+                new KeyValuePair<string, string?>("pageSize", pagination.PageSize.ToString(CultureInfo.InvariantCulture))
+            ]);
+            next = $"{Request.PathBase}{Request.Path}{queryString}";
+        }
+
+        return Ok(new PagedResponse<CustomerInListDto>(customers.Take(pagination.PageSize).ToList(), next));
     }
 
     /// <summary>

@@ -1,32 +1,25 @@
 using MaintenanceChronicle.Application.Contracts.EmailMessages.Commands.Dto;
 using MaintenanceChronicle.Application.Contracts.MaintenanceReminders.Commands;
-using MaintenanceChronicle.Data;
-using MaintenanceChronicle.Data.Entities.Account;
+using MaintenanceChronicle.Data.Entities.Business;
+using MaintenanceChronicle.Data.Specifications;
+using MaintenanceChronicle.Infrastructure.Persistence;
 using MaintenanceChronicle.Utilities.EmailTemplates;
 using MaintenanceChronicle.Utilities.Error;
-using MaintenanceChronicle.Utilities.Options;
 using MediatR;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-using NodaTime;
 using NodaTime.Text;
 
 namespace MaintenanceChronicle.Application.MaintenanceReminders.Commands;
 /// <summary>
 /// Handler for <see cref="GenerateMaintenanceReminderEmailCommand"/>.
 /// </summary>
-public class GenerateMaintenanceReminderEmailCommandHandler(AppDbContext dbContext) : IRequestHandler<GenerateMaintenanceReminderEmailCommand, NewEmailMessageDto>
+public class GenerateMaintenanceReminderEmailCommandHandler(IReadOnlyRepository<Machine> machineReadOnlyRepository) : IRequestHandler<GenerateMaintenanceReminderEmailCommand, NewEmailMessageDto>
 {
     public async Task<NewEmailMessageDto> Handle(GenerateMaintenanceReminderEmailCommand request,
         CancellationToken cancellationToken)
     {
         // Get machine for reminder
-        var machine = await dbContext.Machines
-            .Include(m => m.Location)
-                .ThenInclude(l => l.Contacts)
-                    .ThenInclude(c => c.User)
-            .FirstOrDefaultAsync(m => m.Id == request.Reminder.MachineId, cancellationToken: cancellationToken);
+        var specification = new MachineWithLocationContactsSpecification(request.Reminder.MachineId);
+        var machine = await machineReadOnlyRepository.GetBySpecificationAsync(specification, cancellationToken);
         if (machine == null)
         {
             throw new BadRequestException(ErrorType.MachineNotFound);

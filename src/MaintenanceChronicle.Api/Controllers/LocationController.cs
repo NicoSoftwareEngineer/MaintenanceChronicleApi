@@ -1,3 +1,4 @@
+using System.Globalization;
 using MaintenanceChronicle.Application.Contracts.Customers.Queries;
 using MaintenanceChronicle.Application.Contracts.Customers.Queries.Dto;
 using MaintenanceChronicle.Application.Contracts.LocationContactUsers.Queries;
@@ -9,6 +10,7 @@ using MaintenanceChronicle.Application.Contracts.Machines.Queries;
 using MaintenanceChronicle.Application.Contracts.Machines.Queries.Dto;
 using MaintenanceChronicle.Application.Contracts.Utils.Commands;
 using MaintenanceChronicle.Application.Contracts.Utils.Queries;
+using MaintenanceChronicle.Api.Utils;
 using MaintenanceChronicle.Data.Entities.Business;
 using MaintenanceChronicle.Utilities.Constants;
 using MaintenanceChronicle.Utilities.Helpers;
@@ -67,16 +69,28 @@ public class LocationController(IMediator mediator) : ControllerBase
     }
 
     /// <summary>
-    /// Gets the list of locations
+    /// Gets a page of locations
     /// </summary>
-    /// <returns>List of <see cref="LocationInListDto"/></returns>
+    /// <returns>A page of <see cref="LocationInListDto"/> with a link to the next page</returns>
     [HttpGet("/api/v1/locations")]
-    public async Task<ActionResult<List<LocationInListDto>>> GetLocationList()
+    public async Task<ActionResult<PagedResponse<LocationInListDto>>> GetLocationList(
+        [FromQuery] PaginationQuery pagination)
     {
-        var getLocationsQuery = new GetListOfEntityQuery<LocationInListDto>();
+        var getLocationsQuery = new GetListOfEntityQuery<LocationInListDto>(new PageRequest(pagination.Page, pagination.PageSize));
         var locationList = await mediator.Send(getLocationsQuery);
 
-        return Ok(locationList);
+        string? next = null;
+        if (locationList.Count > pagination.PageSize)
+        {
+            var queryString = QueryString.Create(
+            [
+                new KeyValuePair<string, string?>("page", (pagination.Page + 1).ToString(CultureInfo.InvariantCulture)),
+                new KeyValuePair<string, string?>("pageSize", pagination.PageSize.ToString(CultureInfo.InvariantCulture))
+            ]);
+            next = $"{Request.PathBase}{Request.Path}{queryString}";
+        }
+
+        return Ok(new PagedResponse<LocationInListDto>(locationList.Take(pagination.PageSize).ToList(), next));
     }
 
     /// <summary>
@@ -129,6 +143,7 @@ public class LocationController(IMediator mediator) : ControllerBase
     /// <param name="id">ID of location to get contacts for</param>
     /// <returns>List of <see cref="LocationContactInListDto"/></returns>
     [AllowAnonymous]
+    [AllowTenantlessDataAccess]
     [HttpGet("/api/v1/locations/{id:guid}/contacts")]
     public async Task<ActionResult<List<LocationContactInListDto>>> GetContactsForLocation([FromRoute] Guid id)
     {

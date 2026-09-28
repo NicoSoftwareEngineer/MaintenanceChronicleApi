@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
-using MaintenanceChronicle.Infrastructure;
+using MaintenanceChronicle.Api.Utils;
+using MaintenanceChronicle.Infrastructure.DependencyInjection;
 using Microsoft.OpenApi.Models;
 
 namespace MaintenanceChronicle.Api.Installers;
@@ -10,6 +11,14 @@ public class ApiInstaller : IServiceInstaller
 
     public void Install(IServiceCollection services, IConfiguration configuration)
     {
+        services.AddOptions<PaginationOptions>()
+            .Bind(configuration.GetRequiredSection(PaginationOptions.SectionName))
+            .Validate(options => options.DefaultPageSize > 0 &&
+                                 options.MaxPageSize >= options.DefaultPageSize &&
+                                 options.MaxPageSize < int.MaxValue,
+                "Pagination must have a positive default page size and a valid maximum.")
+            .ValidateOnStart();
+
         //Use PATCH endpoints
         services.AddControllers()
             .AddNewtonsoftJson();

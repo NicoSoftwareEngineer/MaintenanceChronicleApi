@@ -1,24 +1,29 @@
 using MaintenanceChronicle.Application.Contracts.Locations.Commands;
-using MaintenanceChronicle.Data;
+using MaintenanceChronicle.Data.Entities.Account;
 using MaintenanceChronicle.Data.Entities.Business;
 using MaintenanceChronicle.Data.Interfaces;
+using MaintenanceChronicle.Data.Specifications;
+using MaintenanceChronicle.Infrastructure.Persistence;
 using MaintenanceChronicle.Utilities.Error;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using NodaTime;
 
 namespace MaintenanceChronicle.Application.Locations.Commands;
 /// <summary>
 /// Handler for <see cref="ManageContactsInLocationCommand"/>.
 /// </summary>
-public class ManageContactsInLocationCommandHandler(AppDbContext dbContext, IClock clock) : IRequestHandler<ManageContactsInLocationCommand>
+public class ManageContactsInLocationCommandHandler(
+    IRepository<Location> locationRepository,
+    IReadOnlyRepository<User> userReadOnlyRepository,
+    IRepository<LocationContactUser> locationContactRepository,
+    IUnitOfWork uow,
+    IClock clock) : IRequestHandler<ManageContactsInLocationCommand>
 {
     public async Task Handle(ManageContactsInLocationCommand request, CancellationToken cancellationToken)
     {
         // Get current location from db
-        var location = await dbContext.Locations
-            .Include(l => l.Contacts)
-            .FirstOrDefaultAsync(l => l.Id == request.LocationId, cancellationToken);
+        var locationSpecification = new LocationWithContactsSpecification(request.LocationId);
+        var location = await locationRepository.GetBySpecificationAsync(locationSpecification, cancellationToken);
         if (location == null)
         {
             throw new BadRequestException(ErrorType.LocationNotFound);
@@ -42,7 +47,7 @@ public class ManageContactsInLocationCommandHandler(AppDbContext dbContext, IClo
             //Add contact if it is not in existing contact list
             if (location.Contacts.All(x => x.UserId != contact.Id))
             {
-                var user = await dbContext.Users.FindAsync(new object[] { contact.Id }, cancellationToken);
+                var user = await userReadOnlyRepository.GetByIdAsync(contact.Id, cancellationToken);
                 if (user == null)
                 {
                     throw new BadRequestException(ErrorType.UserNotFound);
@@ -56,10 +61,10 @@ public class ManageContactsInLocationCommandHandler(AppDbContext dbContext, IClo
                 };
                 locationContactUser.SetCreateBy(request.UserId, currentInstant);
 
-                await dbContext.AddAsync(locationContactUser, cancellationToken);
+                await locationContactRepository.AddAsync(locationContactUser, cancellationToken);
             }
         }
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await uow.SaveChangesAsync(cancellationToken);
     }
 }

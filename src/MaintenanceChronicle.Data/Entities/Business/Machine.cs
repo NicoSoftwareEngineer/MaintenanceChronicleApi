@@ -8,7 +8,7 @@ using NodaTime;
 namespace MaintenanceChronicle.Data.Entities.Business;
 
 [Table(nameof(Machine))]
-public class Machine : ITrackable, ITenant
+public class Machine : ITrackable, ITenant, IHasId
 {
     public Guid Id { get; set; }
     [MaxLength(StringLengthConstants.MaxNameLength)]

@@ -1,22 +1,22 @@
 using MaintenanceChronicle.Application.Contracts.Machines.Commands;
 using MaintenanceChronicle.Application.Contracts.Machines.Commands.Dto;
-using MaintenanceChronicle.Data;
+using MaintenanceChronicle.Data.Entities.Business;
 using MaintenanceChronicle.Data.Interfaces;
+using MaintenanceChronicle.Infrastructure.Persistence;
 using MaintenanceChronicle.Utilities.Error;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using NodaTime;
 
 namespace MaintenanceChronicle.Application.Machines.Commands;
 /// <summary>
 /// Handler for <see cref="UpdateMachineCommand"/>
 /// </summary>
-public class UpdateMachineCommandHandler(AppDbContext dbContext, IClock clock) : IRequestHandler<UpdateMachineCommand,ManageMachineDetailDto>
+public class UpdateMachineCommandHandler(IReadOnlyRepository<Location> locationReadOnlyRepository, IRepository<Machine> machineRepository, IUnitOfWork uow, IClock clock) : IRequestHandler<UpdateMachineCommand,ManageMachineDetailDto>
 {
     public async Task<ManageMachineDetailDto> Handle(UpdateMachineCommand request, CancellationToken cancellationToken)
     {
         // Get machine from db
-        var machineEntity = await dbContext.Machines.FindAsync(new object[] { request.MachineId }, cancellationToken);
+        var machineEntity = await machineRepository.GetByIdAsync(request.MachineId, cancellationToken);
         if (machineEntity is null)
         {
            throw new BadRequestException(ErrorType.MachineNotFound);
@@ -26,9 +26,7 @@ public class UpdateMachineCommandHandler(AppDbContext dbContext, IClock clock) :
         // Apply patch to dto
         request.Patch.ApplyTo(machineDetail);
 
-        if (!(await dbContext
-                .Locations
-                .AnyAsync(l => l.Id == machineDetail.LocationId, cancellationToken)))
+        if (await locationReadOnlyRepository.GetByIdAsync(machineDetail.LocationId, cancellationToken) is null)
         {
             throw new BadRequestException(ErrorType.LocationNotFound);
         }
@@ -36,7 +34,7 @@ public class UpdateMachineCommandHandler(AppDbContext dbContext, IClock clock) :
         machineDetail.MapToEntity(machineEntity);
         machineEntity.SetModifyBy(request.UserId, clock.GetCurrentInstant());
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await uow.SaveChangesAsync(cancellationToken);
 
         return machineDetail;
     }

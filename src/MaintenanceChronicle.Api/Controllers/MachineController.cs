@@ -1,3 +1,4 @@
+using System.Globalization;
 using MaintenanceChronicle.Application.Contracts.Locations.Queries;
 using MaintenanceChronicle.Application.Contracts.Locations.Queries.Dto;
 using MaintenanceChronicle.Application.Contracts.Machines.Commands;
@@ -10,6 +11,7 @@ using MaintenanceChronicle.Application.Contracts.MaintenanceReminders.Queries.Dt
 using MaintenanceChronicle.Application.Contracts.Utils.Commands;
 using MaintenanceChronicle.Application.Contracts.Utils.Queries;
 using MaintenanceChronicle.Application.Machines.Commands;
+using MaintenanceChronicle.Api.Utils;
 using MaintenanceChronicle.Data.Entities.Business;
 using MaintenanceChronicle.Utilities.Constants;
 using MaintenanceChronicle.Utilities.Helpers;
@@ -75,6 +77,7 @@ public class MachineController(IMediator mediator) : ControllerBase
     /// <param name="id">ID of machine to query for</param>
     /// <returns><see cref="MachineDetailDto"/></returns>
     [AllowAnonymous]
+    [AllowTenantlessDataAccess]
     [HttpGet("/api/v1/machines/{id:guid}")]
     public async Task<ActionResult<MachineDetailDto>> GetMachineById([FromRoute] Guid id)
     {
@@ -85,16 +88,28 @@ public class MachineController(IMediator mediator) : ControllerBase
     }
 
     /// <summary>
-    /// Gets list of machines
+    /// Gets a page of machines
     /// </summary>
-    /// <returns>List of <see cref="MachineInListDto"/></returns>
+    /// <returns>A page of <see cref="MachineInListDto"/> with a link to the next page</returns>
     [HttpGet("/api/v1/machines")]
-    public async Task<ActionResult<List<MachineInListDto>>> GetMachineList()
+    public async Task<ActionResult<PagedResponse<MachineInListDto>>> GetMachineList(
+        [FromQuery] PaginationQuery pagination)
     {
-        var query = new GetListOfEntityQuery<MachineInListDto>();
+        var query = new GetListOfEntityQuery<MachineInListDto>(new PageRequest(pagination.Page, pagination.PageSize));
         var machines = await mediator.Send(query);
 
-        return Ok(machines);
+        string? next = null;
+        if (machines.Count > pagination.PageSize)
+        {
+            var queryString = QueryString.Create(
+            [
+                new KeyValuePair<string, string?>("page", (pagination.Page + 1).ToString(CultureInfo.InvariantCulture)),
+                new KeyValuePair<string, string?>("pageSize", pagination.PageSize.ToString(CultureInfo.InvariantCulture))
+            ]);
+            next = $"{Request.PathBase}{Request.Path}{queryString}";
+        }
+
+        return Ok(new PagedResponse<MachineInListDto>(machines.Take(pagination.PageSize).ToList(), next));
     }
 
     /// <summary>
@@ -118,6 +133,7 @@ public class MachineController(IMediator mediator) : ControllerBase
     /// <param name="id">Specified machine id</param>
     /// <returns>Machines <see cref="LocationInListDto"/></returns>
     [AllowAnonymous]
+    [AllowTenantlessDataAccess]
     [HttpGet("/api/v1/machines/{id:guid}/location")]
     public async Task<ActionResult<List<LocationInListDto>>> GetLocationForMachine(
         [FromRoute] Guid id)

@@ -12,6 +12,7 @@ using MaintenanceChronicle.Application.Contracts.Users.Queries.Dto;
 using MaintenanceChronicle.Application.Contracts.UserTenant.Commands;
 using MaintenanceChronicle.Application.Contracts.UserTenant.Commands.Dto;
 using MaintenanceChronicle.Application.Contracts.Utils.Queries;
+using MaintenanceChronicle.Api.Utils;
 using MaintenanceChronicle.Utilities.Constants;
 using MaintenanceChronicle.Utilities.Error;
 using MaintenanceChronicle.Utilities.Helpers;
@@ -34,6 +35,7 @@ public class AuthController(IMediator mediator) : ControllerBase
     /// <param name="loginDto">Email and password to login user</param>
     /// <param name="jwtOptions">JWT options registered in service collection</param>
     /// <returns></returns>
+    [AllowTenantlessDataAccess]
     [HttpPost("api/v1/auth/login")]
     public async Task<ActionResult> Login([FromBody] LoginDto loginDto, [FromServices] IOptions<JwtOptions> jwtOptions)
     {
@@ -92,6 +94,7 @@ public class AuthController(IMediator mediator) : ControllerBase
     /// <param name="jwtOptions">JWTOptions from service collection</param>
     /// <returns>New token model</returns>
     /// <exception cref="UnauthorizedRequestException">Token is invalid, null or expired</exception>
+    [AllowTenantlessDataAccess]
     [HttpPost("api/v1/auth/refresh-token")]
     public async Task<ActionResult> RefreshToken([FromServices] IOptions<JwtOptions> jwtOptions)
     {
@@ -174,6 +177,7 @@ public class AuthController(IMediator mediator) : ControllerBase
     /// </summary>
     /// <param name="registerUserTenantDto">Information needed to create new user with specified password and tenant</param>
     /// <returns></returns>
+    [AllowTenantlessDataAccess]
     [HttpPost("api/v1/auth/register-user-tenant")]
     public async Task<ActionResult<Guid>> RegisterUserTenant(
         [FromBody] RegisterUserTenantDto registerUserTenantDto
@@ -204,6 +208,7 @@ public class AuthController(IMediator mediator) : ControllerBase
     /// </summary>
     /// <param name="email">Users email that specifies which user should get the email</param>
     /// <returns></returns>
+    [AllowTenantlessDataAccess]
     [HttpPost("api/v1/auth/send-email-confirm-email")]
     public async Task<ActionResult> GenerateEmailConfirmationEmail([FromQuery] string email)
     {
@@ -224,6 +229,7 @@ public class AuthController(IMediator mediator) : ControllerBase
     /// </summary>
     /// <param name="confirmTokenForUserDto">Email and the given token for email confirmation</param>
     /// <returns></returns>
+    [AllowTenantlessDataAccess]
     [HttpPost("api/v1/auth/validate-token")]
     public async Task<ActionResult> ValidateToken(
         [FromQuery] EmailConfirmTokenForUserDto confirmTokenForUserDto
@@ -240,6 +246,7 @@ public class AuthController(IMediator mediator) : ControllerBase
     /// </summary>
     /// <param name="email">Users email that specifies which user should get the email</param>
     /// <returns></returns>
+    [AllowTenantlessDataAccess]
     [HttpPost("api/v1/auth/send-password-reset")]
     public async Task<ActionResult> GeneratePasswordResetEmail([FromQuery] string email)
     {
@@ -260,6 +267,7 @@ public class AuthController(IMediator mediator) : ControllerBase
     /// </summary>
     /// <param name="userResetPasswordDto"></param>
     /// <returns></returns>
+    [AllowTenantlessDataAccess]
     [HttpPost("api/v1/auth/reset-password")]
     public async Task<ActionResult> ResetPassword([FromBody] UserResetPasswordDto userResetPasswordDto)
     {

@@ -1,7 +1,9 @@
 using MaintenanceChronicle.Application.Contracts.Customers.Commands;
 using MaintenanceChronicle.Application.Contracts.Customers.Commands.Dto;
 using MaintenanceChronicle.Data;
+using MaintenanceChronicle.Data.Entities.Business;
 using MaintenanceChronicle.Data.Interfaces;
+using MaintenanceChronicle.Infrastructure.Persistence;
 using MaintenanceChronicle.Utilities.Error;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -11,17 +13,17 @@ namespace MaintenanceChronicle.Application.Customers.Commands;
 /// <summary>
 /// Handler for <see cref="UpdateCustomerCommand"/>
 /// </summary>
-public class UpdateCustomerCommandHandler(AppDbContext dbContext, IClock clock) : IRequestHandler<UpdateCustomerCommand, ManageCustomerDetailDto>
+public class UpdateCustomerCommandHandler(IRepository<Customer> customerRepository, IUnitOfWork uow, IClock clock) : IRequestHandler<UpdateCustomerCommand, ManageCustomerDetailDto>
 {
     public async Task<ManageCustomerDetailDto> Handle(UpdateCustomerCommand request, CancellationToken cancellationToken)
     {
         // Get customer entity from database
-        var customerEntity = await dbContext.Customers.FirstOrDefaultAsync(x => x.Id == request.CustomerId, cancellationToken);
+        var customerEntity = await customerRepository.GetByIdAsync(request.CustomerId, cancellationToken);
         if (customerEntity == null)
         {
             throw new BadRequestException(ErrorType.CustomerNotFound);
         }
-        var patch = request.Patch;
+
         // Map entity to Dto and apply patch
         var customerMapped = customerEntity.ToManageCustomerDetailDto();
         request.Patch.ApplyTo(customerMapped);
@@ -31,7 +33,7 @@ public class UpdateCustomerCommandHandler(AppDbContext dbContext, IClock clock) 
 
         customerEntity.SetModifyBy(request.UserId, clock.GetCurrentInstant());
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await uow.SaveChangesAsync(cancellationToken);
         
         return customerMapped;
     }

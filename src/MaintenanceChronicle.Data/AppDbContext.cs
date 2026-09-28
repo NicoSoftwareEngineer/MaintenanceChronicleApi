@@ -8,10 +8,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MaintenanceChronicle.Data;
 
-public class AppDbContext(DbContextOptions<AppDbContext> options, ICurrentTenantProvider currentTenantProvider)
+public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantAccessChecker tenantAccessChecker)
     : IdentityDbContext<User, Role, Guid, IdentityUserClaim<Guid>, UserRole, IdentityUserLogin<Guid>,
         IdentityRoleClaim<Guid>, IdentityUserToken<Guid>>(options)
 {
+    private Guid? CurrentTenantId => tenantAccessChecker.Current.TenantId;
+    private bool CanReadAcrossTenants => tenantAccessChecker.Current.Mode is TenantAccessMode.Public or TenantAccessMode.System;
+
     public DbSet<Tenant> Tenants { get; set; } = null!;
     public DbSet<Customer> Customers { get; set; } = null!;
     public DbSet<Location> Locations { get; set; } = null!;
@@ -26,15 +29,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ICurrentTenant
         base.OnModelCreating(modelBuilder);
 
         //Global filters
-        modelBuilder.Entity<User>().HasQueryFilter(b => (currentTenantProvider.TenantId == Guid.Empty || b.TenantId == currentTenantProvider.TenantId) && b.DeletedAt == null);
-        modelBuilder.Entity<UserRole>().HasQueryFilter(b => (currentTenantProvider.TenantId == Guid.Empty || b.TenantId == currentTenantProvider.TenantId) && b.DeletedAt == null);
-        modelBuilder.Entity<Tenant>().HasQueryFilter(b => (currentTenantProvider.TenantId == Guid.Empty || b.Id == currentTenantProvider.TenantId) && b.DeletedAt == null);
-        modelBuilder.Entity<Customer>().HasQueryFilter(b => (currentTenantProvider.TenantId == Guid.Empty || b.TenantId == currentTenantProvider.TenantId) && b.DeletedAt == null);
-        modelBuilder.Entity<Location>().HasQueryFilter(b => (currentTenantProvider.TenantId == Guid.Empty || b.TenantId == currentTenantProvider.TenantId) && b.DeletedAt == null);
-        modelBuilder.Entity<LocationContactUser>().HasQueryFilter(b => (currentTenantProvider.TenantId == Guid.Empty || b.TenantId == currentTenantProvider.TenantId) && b.DeletedAt == null);
-        modelBuilder.Entity<Machine>().HasQueryFilter(b => (currentTenantProvider.TenantId == Guid.Empty || b.TenantId == currentTenantProvider.TenantId) && b.DeletedAt == null);
-        modelBuilder.Entity<MaintenanceRecord>().HasQueryFilter(b => (currentTenantProvider.TenantId == Guid.Empty || b.TenantId == currentTenantProvider.TenantId) && b.DeletedAt == null);
-        modelBuilder.Entity<MaintenanceReminder>().HasQueryFilter(b => (currentTenantProvider.TenantId == Guid.Empty || b.TenantId == currentTenantProvider.TenantId) && b.DeletedAt == null);
+        modelBuilder.Entity<User>().HasQueryFilter(b => (CanReadAcrossTenants || b.TenantId == CurrentTenantId) && b.DeletedAt == null);
+        modelBuilder.Entity<UserRole>().HasQueryFilter(b => (CanReadAcrossTenants || b.TenantId == CurrentTenantId) && b.DeletedAt == null);
+        modelBuilder.Entity<Tenant>().HasQueryFilter(b => (CanReadAcrossTenants || b.Id == CurrentTenantId) && b.DeletedAt == null);
+        modelBuilder.Entity<Customer>().HasQueryFilter(b => (CanReadAcrossTenants || b.TenantId == CurrentTenantId) && b.DeletedAt == null);
+        modelBuilder.Entity<Location>().HasQueryFilter(b => (CanReadAcrossTenants || b.TenantId == CurrentTenantId) && b.DeletedAt == null);
+        modelBuilder.Entity<LocationContactUser>().HasQueryFilter(b => (CanReadAcrossTenants || b.TenantId == CurrentTenantId) && b.DeletedAt == null);
+        modelBuilder.Entity<Machine>().HasQueryFilter(b => (CanReadAcrossTenants || b.TenantId == CurrentTenantId) && b.DeletedAt == null);
+        modelBuilder.Entity<MaintenanceRecord>().HasQueryFilter(b => (CanReadAcrossTenants || b.TenantId == CurrentTenantId) && b.DeletedAt == null);
+        modelBuilder.Entity<MaintenanceReminder>().HasQueryFilter(b => (CanReadAcrossTenants || b.TenantId == CurrentTenantId) && b.DeletedAt == null);
 
         modelBuilder.Entity<EmailMessage>()
             .Property(e => e.Recipients)
