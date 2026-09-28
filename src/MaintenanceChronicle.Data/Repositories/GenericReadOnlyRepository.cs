@@ -37,4 +37,21 @@ public class GenericReadOnlyRepository<TEntity>(AppDbContext dbContext) : IReadO
 
         return await entities.AsNoTracking().ToListAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<TEntity>> ListPageAsync(int skip, int take, CancellationToken cancellationToken = default,
+        params Expression<Func<TEntity, object>>[] includes)
+    {
+        IQueryable<TEntity> entities = DbContext.Set<TEntity>();
+
+        foreach (var include in includes)
+        {
+            entities = entities.Include(include);
+        }
+
+        return await entities.AsNoTracking()
+            .OrderBy(entity => entity.Id)
+            .Skip(skip)
+            .Take(take)
+            .ToListAsync(cancellationToken);
+    }
 }

@@ -11,5 +11,7 @@ public interface IReadOnlyRepository<TEntity>
     Task<IReadOnlyList<TEntity>> ListBySpecificationAsync(IListSpecification<TEntity> specification,
         CancellationToken cancellationToken = default);
     Task<IReadOnlyList<TEntity>> ListAsync(CancellationToken cancellationToken = default, params Expression<Func<TEntity, object>>[] includes);
+    Task<IReadOnlyList<TEntity>> ListPageAsync(int skip, int take, CancellationToken cancellationToken = default,
+        params Expression<Func<TEntity, object>>[] includes);
 
 }

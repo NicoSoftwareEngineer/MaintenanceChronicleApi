@@ -13,7 +13,13 @@ public class GetListOfMachinesQueryHandler(IReadOnlyRepository<Machine> machineR
     public async Task<List<MachineInListDto>> Handle(GetListOfEntityQuery<MachineInListDto> request,
         CancellationToken cancellationToken)
     {
-        var machineEntities = await machineReadOnlyRepository.ListAsync(cancellationToken, machine => machine.Location.Customer);
+        var machineEntities = request.PageRequest is { } pageRequest
+            ? await machineReadOnlyRepository.ListPageAsync(
+                checked((pageRequest.Page - 1) * pageRequest.PageSize),
+                pageRequest.PageSize + 1,
+                cancellationToken,
+                machine => machine.Location.Customer)
+            : await machineReadOnlyRepository.ListAsync(cancellationToken, machine => machine.Location.Customer);
         var machines = machineEntities.Select(machine => machine.ToMachineInListDto()).ToList();
 
         return machines;

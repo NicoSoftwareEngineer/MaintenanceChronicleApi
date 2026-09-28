@@ -12,7 +12,13 @@ public class GetListOfMaintenanceRecordsQueryHandler(IReadOnlyRepository<Mainten
 {
     public async Task<List<MaintenanceRecordInListDto>> Handle(GetListOfEntityQuery<MaintenanceRecordInListDto> request, CancellationToken cancellationToken)
     {
-        var recordEntities = await recordReadOnlyRepository.ListAsync(cancellationToken, record => record.Machine.Location.Customer);
+        var recordEntities = request.PageRequest is { } pageRequest
+            ? await recordReadOnlyRepository.ListPageAsync(
+                checked((pageRequest.Page - 1) * pageRequest.PageSize),
+                pageRequest.PageSize + 1,
+                cancellationToken,
+                record => record.Machine.Location.Customer)
+            : await recordReadOnlyRepository.ListAsync(cancellationToken, record => record.Machine.Location.Customer);
         var records = recordEntities.Select(record => record.ToListDto()).ToList();
 
         return records;

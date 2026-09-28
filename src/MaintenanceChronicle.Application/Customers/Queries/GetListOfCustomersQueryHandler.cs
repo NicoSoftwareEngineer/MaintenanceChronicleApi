@@ -15,7 +15,12 @@ public class GetListOfCustomersQueryHandler(IReadOnlyRepository<Customer> custom
     public async Task<List<CustomerInListDto>> Handle(GetListOfEntityQuery<CustomerInListDto> request,
         CancellationToken cancellationToken)
     {
-        var customerEntities = await customerReadOnlyRepository.ListAsync(cancellationToken);
+        var customerEntities = request.PageRequest is { } pageRequest
+            ? await customerReadOnlyRepository.ListPageAsync(
+                checked((pageRequest.Page - 1) * pageRequest.PageSize),
+                pageRequest.PageSize + 1,
+                cancellationToken)
+            : await customerReadOnlyRepository.ListAsync(cancellationToken);
         var customers = customerEntities.Select(c => c.ToListDto()).ToList();
 
         return customers;

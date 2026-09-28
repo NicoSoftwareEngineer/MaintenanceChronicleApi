@@ -74,4 +74,43 @@ public class GetListOfMachinesQueryHandlerTests
         await repository.Received(1).ListAsync(cancellationToken,
             Arg.Is<Expression<Func<Machine, object>>[]>(includes => includes.Length == 1));
     }
+
+    [Fact]
+    public async Task Handle_RequestsOneExtraMachineWithLocationAndCustomer_WhenPageIsSpecified()
+    {
+        // Arrange
+        using var cancellationTokenSource = new CancellationTokenSource();
+        var cancellationToken = cancellationTokenSource.Token;
+        IReadOnlyList<Machine> machines =
+        [
+            new Machine
+            {
+                Id = Guid.NewGuid(),
+                Model = "Pump A",
+                Location = new Location { Name = "Workshop", Customer = new Customer { Name = "Acme" } }
+            }
+        ];
+        var repository = Substitute.For<IReadOnlyRepository<Machine>>();
+        repository.ListPageAsync(5, 6, cancellationToken,
+                Arg.Is<Expression<Func<Machine, object>>[]>(includes => includes.Length == 1))
+            .Returns(machines);
+        var handler = new GetListOfMachinesQueryHandler(repository);
+        var query = new GetListOfEntityQuery<MachineInListDto>(new PageRequest(2, 5));
+
+        // Act
+        var result = await handler.Handle(query, cancellationToken);
+
+        // Assert
+        result.Should().ContainSingle().Which.Should().BeEquivalentTo(new MachineInListDto
+        {
+            Id = machines[0].Id,
+            Model = machines[0].Model,
+            LocationName = machines[0].Location.Name,
+            CustomerName = machines[0].Location.Customer.Name
+        });
+        await repository.Received(1).ListPageAsync(5, 6, cancellationToken,
+            Arg.Is<Expression<Func<Machine, object>>[]>(includes => includes.Length == 1));
+        await repository.DidNotReceive().ListAsync(cancellationToken,
+            Arg.Any<Expression<Func<Machine, object>>[]>());
+    }
 }
