@@ -88,4 +88,54 @@ public class GetListOfMaintenanceRecordsQueryHandlerTests
         await repository.Received(1).ListAsync(cancellationToken,
             Arg.Is<Expression<Func<MaintenanceRecord, object>>[]>(includes => includes.Length == 1));
     }
+
+    [Fact]
+    public async Task Handle_RequestsOneExtraRecordWithRelatedData_WhenPageIsSpecified()
+    {
+        // Arrange
+        using var cancellationTokenSource = new CancellationTokenSource();
+        var cancellationToken = cancellationTokenSource.Token;
+        IReadOnlyList<MaintenanceRecord> records =
+        [
+            new MaintenanceRecord
+            {
+                Id = Guid.NewGuid(),
+                Description = "Installed",
+                Date = Instant.FromUtc(2024, 1, 15, 12, 0),
+                Type = RecordType.Installation,
+                Machine = new Machine
+                {
+                    Model = "Pump",
+                    SerialNumber = "SN-1",
+                    Location = new Location { Name = "Workshop", Customer = new Customer { Name = "Acme" } }
+                }
+            }
+        ];
+        var repository = Substitute.For<IReadOnlyRepository<MaintenanceRecord>>();
+        repository.ListPageAsync(5, 6, cancellationToken,
+                Arg.Is<Expression<Func<MaintenanceRecord, object>>[]>(includes => includes.Length == 1))
+            .Returns(records);
+        var handler = new GetListOfMaintenanceRecordsQueryHandler(repository);
+        var query = new GetListOfEntityQuery<MaintenanceRecordInListDto>(new PageRequest(2, 5));
+
+        // Act
+        var result = await handler.Handle(query, cancellationToken);
+
+        // Assert
+        result.Should().ContainSingle().Which.Should().BeEquivalentTo(new MaintenanceRecordInListDto
+        {
+            Id = records[0].Id,
+            LocationName = records[0].Machine.Location.Name,
+            MachineName = records[0].Machine.Model,
+            MachineSerialNumber = records[0].Machine.SerialNumber,
+            Type = records[0].Type.GetTypeName(),
+            Date = records[0].Date.ToString(),
+            Description = records[0].Description,
+            CustomerName = records[0].Machine.Location.Customer.Name
+        });
+        await repository.Received(1).ListPageAsync(5, 6, cancellationToken,
+            Arg.Is<Expression<Func<MaintenanceRecord, object>>[]>(includes => includes.Length == 1));
+        await repository.DidNotReceive().ListAsync(cancellationToken,
+            Arg.Any<Expression<Func<MaintenanceRecord, object>>[]>());
+    }
 }

@@ -1,3 +1,5 @@
+using System.Globalization;
+using MaintenanceChronicle.Api.Utils;
 using MaintenanceChronicle.Application.Contracts.Machines.Queries;
 using MaintenanceChronicle.Application.Contracts.Machines.Queries.Dto;
 using MaintenanceChronicle.Application.Contracts.MaintenanceRecords.Commands;
@@ -82,16 +84,28 @@ public class MaintenanceRecordController(IMediator mediator) : ControllerBase
     }
 
     /// <summary>
-    /// Gets list of all maintenance records
+    /// Gets a page of maintenance records
     /// </summary>
-    /// <returns>List of <see cref="MaintenanceRecordInListDto"/></returns>
+    /// <returns>A page of <see cref="MaintenanceRecordInListDto"/> with a link to the next page</returns>
     [HttpGet("/api/v1/maintenance-records/")]
-    public async Task<ActionResult<MaintenanceRecordInListDto>> GetListOfMaintenanceRecords()
+    public async Task<ActionResult<PagedResponse<MaintenanceRecordInListDto>>> GetListOfMaintenanceRecords(
+        [FromQuery] PaginationQuery pagination)
     {
-        var query = new GetListOfEntityQuery<MaintenanceRecordInListDto>();
+        var query = new GetListOfEntityQuery<MaintenanceRecordInListDto>(new PageRequest(pagination.Page, pagination.PageSize));
         var result = await mediator.Send(query);
 
-        return Ok(result);
+        string? next = null;
+        if (result.Count > pagination.PageSize)
+        {
+            var queryString = QueryString.Create(
+            [
+                new KeyValuePair<string, string?>("page", (pagination.Page + 1).ToString(CultureInfo.InvariantCulture)),
+                new KeyValuePair<string, string?>("pageSize", pagination.PageSize.ToString(CultureInfo.InvariantCulture))
+            ]);
+            next = $"{Request.PathBase}{Request.Path}{queryString}";
+        }
+
+        return Ok(new PagedResponse<MaintenanceRecordInListDto>(result.Take(pagination.PageSize).ToList(), next));
     }
 
     /// <summary>
