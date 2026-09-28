@@ -13,7 +13,13 @@ public class GetListOfLocationsQueryHandler(IReadOnlyRepository<Location> locati
     public async Task<List<LocationInListDto>> Handle(GetListOfEntityQuery<LocationInListDto> request,
         CancellationToken cancellationToken)
     {
-        var locationEntities = await locationReadOnlyRepository.ListAsync(cancellationToken, location => location.Customer);
+        var locationEntities = request.PageRequest is { } pageRequest
+            ? await locationReadOnlyRepository.ListPageAsync(
+                checked((pageRequest.Page - 1) * pageRequest.PageSize),
+                pageRequest.PageSize + 1,
+                cancellationToken,
+                location => location.Customer)
+            : await locationReadOnlyRepository.ListAsync(cancellationToken, location => location.Customer);
         var locationList = locationEntities.Select(location => location.ToLocationInListDto()).ToList();
 
         return locationList;
