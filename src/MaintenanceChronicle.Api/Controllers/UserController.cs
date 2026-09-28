@@ -1,3 +1,5 @@
+using System.Globalization;
+using MaintenanceChronicle.Api.Utils;
 using MaintenanceChronicle.Application.Contracts.EmailMessages.Commands;
 using MaintenanceChronicle.Application.Contracts.LocationContactUsers.Queries;
 using MaintenanceChronicle.Application.Contracts.LocationContactUsers.Queries.Dto;
@@ -112,16 +114,28 @@ public class UserController(IMediator mediator) : ControllerBase
     }
 
     /// <summary>
-    /// Gets a list of users
+    /// Gets a page of users
     /// </summary>
-    /// <returns>List of users</returns>
+    /// <returns>A page of <see cref="UserListDto"/> with a link to the next page</returns>
     [HttpGet("api/v1/users")]
-    public async Task<ActionResult> GetUserList()
+    public async Task<ActionResult<PagedResponse<UserListDto>>> GetUserList(
+        [FromQuery] PaginationQuery pagination)
     {
-        var usersQuery = new GetListOfEntityQuery<UserListDto>();
+        var usersQuery = new GetListOfEntityQuery<UserListDto>(new PageRequest(pagination.Page, pagination.PageSize));
         var users = await mediator.Send(usersQuery);
 
-        return Ok(users);
+        string? next = null;
+        if (users.Count > pagination.PageSize)
+        {
+            var queryString = QueryString.Create(
+            [
+                new KeyValuePair<string, string?>("page", (pagination.Page + 1).ToString(CultureInfo.InvariantCulture)),
+                new KeyValuePair<string, string?>("pageSize", pagination.PageSize.ToString(CultureInfo.InvariantCulture))
+            ]);
+            next = $"{Request.PathBase}{Request.Path}{queryString}";
+        }
+
+        return Ok(new PagedResponse<UserListDto>(users.Take(pagination.PageSize).ToList(), next));
     }
 
     /// <summary>

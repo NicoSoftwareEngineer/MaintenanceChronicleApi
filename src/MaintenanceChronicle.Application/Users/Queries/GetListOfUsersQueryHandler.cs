@@ -15,9 +15,20 @@ public class GetListOfUsersQueryHandler(UserManager<User> userManager) : IReques
     public async Task<List<UserListDto>> Handle(GetListOfEntityQuery<UserListDto> request,
         CancellationToken cancellationToken)
     {
-        var users = await userManager.Users
+        IQueryable<User> userQuery = userManager.Users
+            .AsNoTracking()
             .Include(x => x.Roles)
-            .ThenInclude(x => x.Role)
+            .ThenInclude(x => x.Role);
+
+        if (request.PageRequest is { } pageRequest)
+        {
+            userQuery = userQuery
+                .OrderBy(user => user.Id)
+                .Skip(checked((pageRequest.Page - 1) * pageRequest.PageSize))
+                .Take(pageRequest.PageSize + 1);
+        }
+
+        var users = await userQuery
             .Select(x => new UserListDto
             {
                 Id = x.Id,
