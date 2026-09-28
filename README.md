@@ -1,41 +1,31 @@
-#  MaintenanceChronicleApi
+# Maintenance Chronicle API
 
-**MaintenanceChronicleApi** is a backend REST API built with **ASP.NET Core** using Clean architecture with **CQS (Command Query Separation)** pattern and backed by a **PostgreSQL** database. It is designed to handle tasks and workflows associated with maintenance tracking and management.
+Maintenance Chronicle is a REST API for tracking customers, locations, machines, maintenance records, and reminders. It also supports user accounts, role-based access, and email workflows.
 
----
+## What the API supports
 
-##  Tech Stack
+- Managing customers, locations, and machines
+- Recording maintenance work and scheduling reminders
+- Managing users and their roles
+- Signing in with JWT authentication
+- Sending email confirmation, password reset, and invitation emails
 
-- **ASP.NET Core Web API**
-- **PostgreSQL**
-- **Clean architecture with CQS pattern**
-- **JWT Authentication**
-- **SMTP Integration (for email workflows)**
+## Getting started
 
----
+### 1. Prerequisites
 
-##  Documentation
+Install the .NET 9 SDK and make a PostgreSQL database available to the API. To use email features, you also need access to an SMTP server.
 
-Comprehensive API and architecture documentation is available at:
-
- [https://nicosoftwareengineer.github.io/MaintenanceChronicleApi/index.html](https://nicosoftwareengineer.github.io/MaintenanceChronicleApi/index.html)
-
----
-
-##  Getting Started
-
-### 1. Clone the Repository
+### 2. Get the source
 
 ```bash
 git clone https://github.com/NicoSoftwareEngineer/MaintenanceChronicleApi.git
-cd maintenanceChronicleApi
+cd MaintenanceChronicleApi
 ```
 
-### 2. Configure `appsettings.json`
+### 3. Configure the API
 
-Before running the project, ensure you fill in the necessary fields in the `appsettings.json` configuration file.
-
-Here is a sample structure:
+Open `src/MaintenanceChronicle.Api/appsettings.json` and set the values for your environment. The example below shows the complete configuration structure:
 
 ```json
 {
@@ -46,87 +36,61 @@ Here is a sample structure:
     }
   },
   "AllowedHosts": "*",
+  "Pagination": {
+    "DefaultPageSize": 5,
+    "MaxPageSize": 50
+  },
   "ConnectionStrings": {
-    "DbConnection": "your_postgresql_connection_string"
+    "DbConnection": "Host=localhost;Port=5432;Database=maintenance_chronicle;Username=YOUR_USER;Password=YOUR_PASSWORD"
   },
   "EnvironmentOptions": {
-    "FrontendHostUrl": "url_of_ui",
+    "FrontendHostUrl": "YOUR_FRONTEND_URL",
     "FrontendConfirmUrl": "/auth/email-confirm/[Email]/[ConfToken]",
     "FrontendPasswordResetUrl": "/auth/password-reset/[Email]/[PasswordToken]",
-    "FrontendPasswordCre_ateUrl": "/auth/create-password/[Email]/[ConfToken]/[PasswordToken]",
-    "SenderEmail": "your_email",
+    "FrontendPasswordCreateUrl": "/auth/create-password/[Email]/[ConfToken]/[PasswordToken]",
+    "SenderEmail": "YOUR_SENDER_EMAIL",
     "SenderName": "Maintenance Chronicle"
   },
   "SmtpOptions": {
-    "Host": "your_smtp_host",
-    "Port": "your_smtp_port",
-    "Username": "your_smtp_username",
-    "Password": "your_smtp_password"
+    "Host": "YOUR_SMTP_HOST",
+    "Port": 587,
+    "Username": "YOUR_SMTP_USERNAME",
+    "Password": "YOUR_SMTP_PASSWORD"
   },
   "JwtOptions": {
-    "SecretKey": "your_very_long_secret_key",
-    "Issuer": "url_of_app",
-    "Audience": "url_of_ui",
+    "SecretKey": "REPLACE_WITH_A_LONG_RANDOM_SECRET_KEY",
+    "Issuer": "YOUR_API_URL",
+    "Audience": "YOUR_FRONTEND_URL",
     "AccessTokenExpirationInMinutes": 30,
     "RefreshTokenExpirationInDays": 14
   }
 }
 ```
 
->  Replace all placeholder values with your own credentials.
+Replace the uppercase placeholders with your own values. Set the SMTP port to the port required by your email provider.
 
----
+Email confirmation, password reset, invitations, and reminder emails require working `SmtpOptions` settings. The links in those emails also depend on the frontend URLs in `EnvironmentOptions`. Keep passwords and signing keys private, and do not commit your filled-in configuration file with credentials.
 
-##  Database Setup
+### 4. Start the API
 
-Ensure you have a running PostgreSQL instance. Update the `DbConnection` string in `appsettings.json` accordingly.
-
-Run the migrations to create the database schema:
+From the repository root:
 
 ```bash
-dotnet ef database update
+dotnet run --project src/MaintenanceChronicle.Api --launch-profile http
 ```
 
----
+The API will run at `http://localhost:5209`. In the Development environment, open [Swagger UI](http://localhost:5209/swagger) to explore and call its endpoints.
 
-##  Running the Project
+The API applies database migrations when it starts. Check that `DbConnection` points to your intended database before running it.
 
-Use the .NET CLI to run the API locally:
+## First account and authentication
 
-```bash
-dotnet run
-```
+Use `POST /api/v1/auth/register-user-tenant` to create the first user and tenant. Registration does not sign the user in. The account must have its email confirmed before login, so SMTP must be configured for this flow.
 
-The API will start on the default port (usually `https://localhost:5209`).
+Request a confirmation email with `POST /api/v1/auth/send-email-confirm-email`, then complete confirmation through `POST /api/v1/auth/validate-token`. Sign in with `POST /api/v1/auth/login`.
 
----
+Login returns an access token. Send it as a Bearer token when calling protected endpoints. In Swagger UI, use **Authorize** and enter the token without the `Bearer` prefix.
 
-##  Architectural Overview
+## Programmer documentation
 
-This project follows the **CQS (Command Query Separation)** pattern:
-
-- **Commands**: Used for write operations (e.g., create/update/delete).
-- **Queries**: Used for read operations (e.g., fetch by ID, list).
-
-This separation promotes cleaner logic, better testability, and a more maintainable codebase.
-
----
-
-##  Email Functionality
-
-The API includes SMTP integration for:
-
-- Email confirmation
-- Password reset
-- Password creation
-
-Configure the `SmtpOptions` and `EnvironmentOptions` in `appsettings.json` to match your email provider and frontend URLs.
-
----
-
-##  Authentication
-
-Authentication is handled via **JWT (JSON Web Tokens)**. Ensure the `JwtOptions.SecretKey` is secure and sufficiently long.
-
-#### I am retaking a course and I have work in a different repository --- what should I do?
-If you did pass the requirements for the final project in a previous year, you don't need to repeat that part of the course again. If you didn't pass this requirement, you are, in principle, starting with no progress on the final project. Therefore, follow the current year's deadlines, the current year's *relevant teacher*, and manually transfer your work (specification, implementation) from the other repository to this one (including merge requests).
+For the codebase guide, development setup, tests, and generated API reference, see the [Maintenance Chronicle programmer documentation](https://nicosoftwareengineer.github.io/MaintenanceChronicleApi/index.html).
