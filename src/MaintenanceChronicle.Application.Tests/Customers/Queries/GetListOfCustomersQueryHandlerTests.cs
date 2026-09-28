@@ -91,4 +91,29 @@ public class GetListOfCustomersQueryHandlerTests
         result.Should().BeEmpty();
         await customerRepository.Received(1).ListAsync(cancellationToken);
     }
+
+    [Fact]
+    public async Task Handle_RequestsOneExtraCustomer_WhenPageIsSpecified()
+    {
+        // Arrange
+        using var cancellationTokenSource = new CancellationTokenSource();
+        var cancellationToken = cancellationTokenSource.Token;
+        IReadOnlyList<Customer> customers =
+        [
+            new Customer { Id = Guid.NewGuid(), Name = "Paged Customer" }
+        ];
+        var customerRepository = Substitute.For<IReadOnlyRepository<Customer>>();
+        customerRepository.ListPageAsync(5, 6, cancellationToken).Returns(customers);
+        var handler = new GetListOfCustomersQueryHandler(customerRepository);
+        var query = new GetListOfEntityQuery<CustomerInListDto>(new PageRequest(2, 5));
+
+        // Act
+        var result = await handler.Handle(query, cancellationToken);
+
+        // Assert
+        result.Should().ContainSingle()
+            .Which.Id.Should().Be(customers[0].Id);
+        await customerRepository.Received(1).ListPageAsync(5, 6, cancellationToken);
+        await customerRepository.DidNotReceive().ListAsync(cancellationToken);
+    }
 }

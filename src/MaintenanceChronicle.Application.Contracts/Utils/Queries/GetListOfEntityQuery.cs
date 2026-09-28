@@ -6,4 +6,4 @@ namespace MaintenanceChronicle.Application.Contracts.Utils.Queries;
 /// </summary>
 /// <typeparam name="TEntity">Entity type to query</typeparam>
 /// <returns>List of desired entities</returns>
-public record GetListOfEntityQuery<TEntity>() : IRequest<List<TEntity>>;
+public record GetListOfEntityQuery<TEntity>(PageRequest? PageRequest = null) : IRequest<List<TEntity>>;
